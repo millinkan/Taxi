@@ -19,6 +19,10 @@ Adding a new firm is a form, not a project. Everything a firm owns is scoped
 to that firm, and a regional template gives each new firm its places, fixed
 prices and tariffs on day one.
 
+
+Platform admin: admin@example.com / change-me-please
+Firm owner: owner@example.com / change-me-please
+
 ## Architecture in one picture
 
 ```
