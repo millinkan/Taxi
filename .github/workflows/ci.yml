@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  core:
+    name: Core (Rails) - tests, security, lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: core
+    env:
+      RAILS_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          working-directory: core
+          bundler-cache: true
+      - name: Prepare database
+        run: bin/rails db:test:prepare
+      - name: Tests
+        run: bin/rails test
+      - name: Brakeman (static security analysis)
+        run: bin/brakeman --no-pager
+      - name: Bundler audit (vulnerable gems)
+        run: bin/bundler-audit
+      - name: Importmap audit (vulnerable JS)
+        run: bin/importmap audit
+      - name: RuboCop
+        run: bin/rubocop -f github
+
+  voice:
+    name: Voice (Node) - typecheck, tests, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: voice
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: voice/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --audit-level=high

@@ -1,0 +1,118 @@
+<% urls = TenantUrls.new(current_tenant) %>
+<% firm = current_tenant.name %>
+<% home = current_tenant.home_area_label %>
+<% name = @place.name %>
+<% phone = current_tenant.public_phone.presence || current_tenant.dispatcher_phone %>
+<% headline_row = @rows.find { |row| row[:fixed] } || @rows.first %>
+<% key = @local ? "local" : "remote" %>
+<% content_for :title, t("public.locality.#{key}.title", place: name, home: home, firm: firm) %>
+<% content_for :description, t("public.locality.#{key}.meta_description", place: name, home: home, firm: firm,
+                               price: headline_row ? money(headline_row[:price_cents]) : "–") %>
+<% content_for :canonical, urls.locality_page(@place) %>
+
+<%
+  faq = []
+  if @local
+    faq << [ t("public.locality.faq.how_fast_q", place: name),
+             current_tenant.asap_enabled? ? t("public.locality.faq.how_fast_now", place: name, minutes: current_tenant.asap_response_minutes, phone: phone && PhoneNumber.display(phone))
+                                          : t("public.locality.faq.how_fast_book", minutes: current_tenant.min_lead_minutes) ]
+  end
+  if headline_row
+    faq << [ t("public.locality.faq.price_q", from: name, to: headline_row[:place].name),
+             t("public.locality.faq.price_a", price: money(headline_row[:price_cents], estimated: headline_row[:estimated]),
+               kind: t(headline_row[:fixed] ? "public.locality.fixed" : "public.locality.metered"),
+               minutes: headline_row[:duration_min] || "–") ]
+  end
+  if @place.airport?
+    faq << [ t("public.locality.faq.flight_q"), t("public.booking.flight_hint") ]
+  end
+  if @tariff && @tariff.night_surcharge_percent.positive?
+    faq << [ t("public.locality.faq.night_q"),
+             t("public.locality.faq.night_a", percent: @tariff.night_surcharge_percent, from: @tariff.night_starts_at,
+               to: @tariff.night_ends_at, minimum: money(@tariff.minimum_fare_cents)) ]
+  end
+  faq << [ t("public.locality.faq.pay_q"), t("public.booking.payment_note") ]
+%>
+
+<section class="hero">
+  <h1><%= t("public.locality.#{key}.headline", place: name, home: home) %></h1>
+  <p><%= t("public.locality.#{key}.intro", place: name, home: home, firm: firm) %></p>
+  <% if @place.alias_list.any? %><p class="muted"><%= t("public.locality.also_known_as", names: @place.alias_list.join(", ")) %></p><% end %>
+</section>
+
+<div class="actions" style="margin-top: 12px;">
+  <% if @local && current_tenant.asap_enabled? %>
+    <%= link_to "🚕 #{t("public.locality.now", place: name)}", site_path(:now, from: @place.id), class: "btn btn--primary btn--lg" %>
+  <% end %>
+  <%= link_to t("public.locality.book", place: name), site_path(:booking_page, from: @place.id),
+        class: "btn btn--lg #{"btn--primary" unless @local && current_tenant.asap_enabled?}" %>
+  <% if phone.present? %><a class="btn btn--lg" href="tel:<%= phone %>">📞 <%= PhoneNumber.display(phone) %></a><% end %>
+</div>
+
+<% if @rows.any? %>
+  <h2 class="section-title"><%= t("public.locality.#{key}.prices_title", place: name, home: home) %></h2>
+  <div class="card card--flush table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th><%= t("public.locality.destination") %></th>
+          <th class="num"><%= t("public.status.price") %></th>
+          <th class="num"><%= t("public.locality.duration") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rows.each do |row| %>
+          <tr>
+            <td><%= link_to row[:place].name, site_path(:locality, place: row[:place].slug) %>
+              <% if row[:fixed] %> <span class="tag"><%= t("public.locality.fixed") %></span><% end %></td>
+            <td class="num"><strong><%= money(row[:price_cents], estimated: row[:estimated]) %></strong></td>
+            <td class="num"><%= row[:duration_min] ? "~#{row[:duration_min]} min" : "–" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="field-hint"><%= t("public.locality.prices_note") %></p>
+<% end %>
+
+<h2 class="section-title"><%= t("public.locality.faq_title") %></h2>
+<div class="card stack">
+  <% faq.each do |question, answer| %>
+    <div>
+      <h3 style="margin: 0 0 4px; font-size: 1rem;"><%= question %></h3>
+      <p style="margin: 0;"><%= answer %></p>
+    </div>
+  <% end %>
+</div>
+
+<% if @nearby.any? %>
+  <h2 class="section-title"><%= t("public.locality.nearby") %></h2>
+  <div class="chips">
+    <% @nearby.each do |place| %>
+      <%= link_to "Taxi #{place.name}", site_path(:locality, place: place.slug), class: "chip" %>
+    <% end %>
+  </div>
+<% end %>
+
+<%= tag.script(json_escape({
+      "@context" => "https://schema.org",
+      "@graph" => [
+        {
+          "@type" => "TaxiService",
+          "name" => "Taxi #{name}",
+          "url" => urls.locality_page(@place),
+          "provider" => { "@id" => "#{urls.public_base}#business" },
+          "areaServed" => @profile.place_node(@place),
+          "offers" => @rows.map { |row|
+            { "@type" => "Offer", "name" => "#{name} – #{row[:place].name}",
+              "price" => format("%.2f", row[:price_cents] / 100.0), "priceCurrency" => current_tenant.currency }
+          }.presence
+        }.compact,
+        {
+          "@type" => "FAQPage",
+          "mainEntity" => faq.map { |question, answer|
+            { "@type" => "Question", "name" => question, "acceptedAnswer" => { "@type" => "Answer", "text" => answer } }
+          }
+        }
+      ]
+    }.to_json).html_safe, type: "application/ld+json") %>

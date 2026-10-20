@@ -1,0 +1,92 @@
+<% content_for :title, t("dispatch.new.title") %>
+
+<div class="page-head">
+  <h1><%= t("dispatch.new.title") %></h1>
+</div>
+
+<div class="card" style="max-width: 720px;">
+  <%= form_errors(@errors) if @errors %>
+  <%= form_with model: @request, scope: :booking, url: dispatch_bookings_path, method: :post do |f| %>
+    <datalist id="known-places">
+      <% @places.each do |place| %><option value="<%= place.name %>"></option><% end %>
+    </datalist>
+
+    <div class="fields-2">
+      <div class="field">
+        <%= f.label :phone, t("public.booking.phone") %>
+        <%= f.telephone_field :phone, required: true, autofocus: true, inputmode: "tel" %>
+      </div>
+      <div class="field">
+        <%= f.label :name, t("public.booking.name") %>
+        <%= f.text_field :name, required: true %>
+      </div>
+    </div>
+
+    <div class="field">
+      <%= f.label :pickup_address, t("public.booking.pickup") %>
+      <%= f.text_field :pickup_address, required: true, list: "known-places" %>
+    </div>
+    <div class="field">
+      <%= f.label :dropoff_address, t("public.booking.dropoff") %>
+      <%= f.text_field :dropoff_address, required: true, list: "known-places" %>
+    </div>
+
+    <div class="fields-2">
+      <div class="field">
+        <%= f.label :pickup_date, t("public.booking.date") %>
+        <%= f.date_field :pickup_date, required: true %>
+      </div>
+      <div class="field">
+        <%= f.label :pickup_time, t("public.booking.time") %>
+        <%= f.time_field :pickup_time, required: true, step: 300 %>
+      </div>
+    </div>
+
+    <div class="fields-3">
+      <div class="field">
+        <%= f.label :passengers, t("public.booking.passengers") %>
+        <%= f.select :passengers, (1..16).to_a %>
+      </div>
+      <div class="field">
+        <%= f.label :luggage, t("public.booking.luggage") %>
+        <%= f.select :luggage, (0..12).to_a %>
+      </div>
+      <div class="field">
+        <%= f.label :vehicle_category, t("public.booking.vehicle") %>
+        <%= f.select :vehicle_category, [ [ t("public.booking.vehicle_auto"), "" ] ] + VehicleCategory::ALL.map { |c| [ t("vehicle_categories.#{c}"), c ] } %>
+      </div>
+    </div>
+
+    <div class="fields-2">
+      <div class="field">
+        <%= f.label :flight_number, t("public.booking.flight") %>
+        <%= f.text_field :flight_number %>
+      </div>
+      <div class="field">
+        <%= f.label :price_override, t("dispatch.fields.set_price", currency: current_tenant.currency) %>
+        <%= f.number_field :price_override, step: "0.05", min: 0, inputmode: "decimal" %>
+        <p class="field-hint"><%= t("dispatch.new.price_hint") %></p>
+      </div>
+    </div>
+
+    <div class="fields-2">
+      <div class="field">
+        <%= f.label :payment_method, t("dispatch.fields.payment") %>
+        <%= f.select :payment_method, Booking::PAYMENT_METHODS.map { |m| [ t("payment_methods.#{m}"), m ] } %>
+      </div>
+      <div class="field">
+        <%= f.label :locale, t("dispatch.fields.language") %>
+        <%= f.select :locale, Tenant::LOCALES.map { |l| [ l.upcase, l ] } %>
+      </div>
+    </div>
+
+    <div class="field">
+      <%= f.label :notes, t("public.booking.notes") %>
+      <%= f.text_area :notes, rows: 2 %>
+    </div>
+
+    <label class="checkbox"><%= check_box_tag :confirm_now, "1", true %> <%= t("dispatch.new.confirm_now") %></label>
+    <p></p>
+    <%= f.submit t("dispatch.new.submit"), class: "btn btn--primary btn--lg" %>
+  <% end %>
+</div>

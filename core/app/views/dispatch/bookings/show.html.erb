@@ -1,0 +1,178 @@
+<% content_for :title, @booking.reference %>
+<% customer = @booking.customer %>
+
+<div class="page-head">
+  <div>
+    <h1><% if @booking.asap? %>🚕 <%= t("dispatch.asap.label") %> · <% end %><%= pickup_time(@booking, format: :long_day) %></h1>
+    <span class="muted mono"><%= @booking.reference %></span> · <span class="tag"><%= source_label(@booking.source) %></span>
+    <% if @booking.eta_minutes %> · <span class="tag"><%= t("dispatch.asap.eta_promised", count: @booking.eta_minutes) %></span><% end %>
+  </div>
+  <%= status_badge(@booking) %>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <h2><%= t("dispatch.sections.trip") %></h2>
+    <dl class="kv">
+      <dt><%= t("dispatch.fields.from") %></dt>
+      <dd><%= link_to @booking.pickup_address, @booking.navigation_url(@booking.pickup_point), rel: "noreferrer", target: "_blank" %></dd>
+      <dt><%= t("dispatch.fields.to") %></dt>
+      <dd><%= link_to @booking.dropoff_address, @booking.navigation_url(@booking.dropoff_point), rel: "noreferrer", target: "_blank" %></dd>
+      <dt><%= t("dispatch.fields.party") %></dt>
+      <dd><%= t("dispatch.party", pax: @booking.passengers, bags: @booking.luggage) %> · <%= t("vehicle_categories.#{@booking.vehicle_category}") %></dd>
+      <% if @booking.flight_number.present? %>
+        <dt><%= t("dispatch.fields.flight") %></dt>
+        <dd><%= link_to @booking.flight_number, "https://www.google.com/search?q=#{ERB::Util.url_encode(@booking.flight_number)}+flight+status", rel: "noreferrer", target: "_blank" %></dd>
+      <% end %>
+      <% if @booking.distance_m %>
+        <dt><%= t("dispatch.fields.distance") %></dt>
+        <dd><%= number_with_precision(@booking.distance_m / 1000.0, precision: 1) %> km · ~<%= (@booking.duration_s.to_i / 60.0).round %> min</dd>
+      <% end %>
+      <dt><%= t("dispatch.fields.price") %></dt>
+      <dd><strong><%= booking_price(@booking) %></strong> <span class="muted">(<%= t("price_sources.#{@booking.price_source || "on_request"}") %>)</span></dd>
+      <dt><%= t("dispatch.fields.payment") %></dt>
+      <dd><%= t("payment_methods.#{@booking.payment_method}") %></dd>
+      <% if @booking.notes.present? %>
+        <dt><%= t("dispatch.fields.notes") %></dt>
+        <dd><%= @booking.notes %></dd>
+      <% end %>
+      <% if @booking.outbound_booking %>
+        <dt><%= t("dispatch.fields.return_of") %></dt>
+        <dd><%= link_to @booking.outbound_booking.reference, dispatch_booking_path(@booking.outbound_booking) %></dd>
+      <% end %>
+    </dl>
+  </div>
+
+  <div class="card">
+    <h2><%= t("dispatch.sections.customer") %></h2>
+    <dl class="kv">
+      <dt><%= t("dispatch.fields.name") %></dt>
+      <dd><%= customer.display_name %><% if customer.repeat? %> <span class="tag"><%= t("dispatch.repeat_customer", count: customer.bookings_count) %></span><% end %></dd>
+      <dt><%= t("dispatch.fields.phone") %></dt>
+      <dd><%= phone_link(customer.phone) %></dd>
+      <% if customer.email.present? %>
+        <dt><%= t("dispatch.fields.email") %></dt>
+        <dd><%= mail_to customer.email %></dd>
+      <% end %>
+      <dt><%= t("dispatch.fields.language") %></dt>
+      <dd><%= @booking.locale.upcase %></dd>
+      <% if @booking.utm_source || @booking.gclid %>
+        <dt><%= t("dispatch.fields.attribution") %></dt>
+        <dd><%= [ @booking.utm_source, @booking.utm_campaign, ("Google Ads" if @booking.gclid) ].compact.join(" · ") %></dd>
+      <% end %>
+    </dl>
+  </div>
+</div>
+
+<% if current_user.can_dispatch? || current_user.role == "driver" %>
+  <div style="margin-top: 16px;"><%= render "dispatch/tracking", booking: @booking %></div>
+<% end %>
+
+<h2 class="section-title"><%= t("dispatch.sections.actions") %></h2>
+<div class="card stack">
+  <% if @booking.pending? && @booking.asap? && current_user.can_dispatch? %>
+    <%= render "dispatch/eta_buttons", url: confirm_dispatch_booking_path(@booking) %>
+  <% end %>
+  <div class="actions">
+    <% if @booking.pending? && !@booking.asap? && current_user.can_dispatch? %>
+      <%= button_to t("dispatch.actions.confirm"), confirm_dispatch_booking_path(@booking), class: "btn btn--good btn--block" %>
+    <% end %>
+    <% if @booking.pending? && current_user.can_dispatch? %>
+      <%= button_to t("dispatch.actions.decline"), decline_dispatch_booking_path(@booking), params: { reason: "no_capacity" },
+            class: "btn btn--bad btn--block", form: { data: { turbo_confirm: t("dispatch.actions.decline_confirm") } } %>
+    <% end %>
+    <% if @booking.confirmed? %>
+      <%= button_to t("dispatch.actions.start"), start_dispatch_booking_path(@booking), class: "btn btn--primary btn--block" %>
+    <% end %>
+    <% if @booking.confirmed? || @booking.on_the_way? %>
+      <%= button_to t("dispatch.actions.no_show"), no_show_dispatch_booking_path(@booking), class: "btn btn--block",
+            form: { data: { turbo_confirm: t("dispatch.actions.no_show_confirm") } } %>
+    <% end %>
+    <% if @booking.open? && current_user.can_dispatch? %>
+      <%= button_to t("dispatch.actions.cancel"), cancel_dispatch_booking_path(@booking), params: { reason: "dispatcher" },
+            class: "btn btn--bad btn--block", form: { data: { turbo_confirm: t("dispatch.actions.cancel_confirm") } } %>
+    <% end %>
+    <a class="btn btn--block" href="tel:<%= customer.phone %>">📞 <%= t("dispatch.actions.call_customer") %></a>
+  </div>
+
+  <% if @booking.confirmed? || @booking.on_the_way? %>
+    <%= form_with url: complete_dispatch_booking_path(@booking), method: :post do |f| %>
+      <%= f.label :final_price, t("dispatch.final_price_label", currency: current_tenant.currency) %>
+      <div class="row">
+        <%= f.number_field :final_price, step: "0.05", min: 0, inputmode: "decimal", style: "flex: 1;",
+              placeholder: @booking.quoted_price_cents && format("%.2f", @booking.quoted_price_cents / 100.0) %>
+        <%= f.submit t("dispatch.actions.complete"), class: "btn btn--good" %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<% if current_user.can_dispatch? && @booking.open? %>
+  <h2 class="section-title"><%= t("dispatch.sections.assignment") %></h2>
+  <div class="card">
+    <%= form_with model: @booking, url: dispatch_booking_path(@booking), method: :patch, scope: :booking do |f| %>
+      <div class="fields-2">
+        <div class="field">
+          <%= f.label :vehicle_id, t("dispatch.fields.vehicle") %>
+          <%= f.collection_select :vehicle_id, @vehicles, :id, :label, include_blank: "—" %>
+        </div>
+        <div class="field">
+          <%= f.label :driver_id, t("dispatch.fields.driver") %>
+          <%= f.collection_select :driver_id, @drivers, :id, :name, include_blank: "—" %>
+        </div>
+      </div>
+      <% if @booking.pending? %>
+        <div class="field">
+          <%= f.label :price, t("dispatch.fields.set_price", currency: current_tenant.currency) %>
+          <%= f.number_field :price, step: "0.05", min: 0, inputmode: "decimal",
+                value: @booking.quoted_price_cents && format("%.2f", @booking.quoted_price_cents / 100.0) %>
+          <p class="field-hint"><%= t("dispatch.set_price_hint") %></p>
+        </div>
+      <% end %>
+      <div class="field">
+        <%= f.label :internal_notes, t("dispatch.fields.internal_notes") %>
+        <%= f.text_area :internal_notes, rows: 2 %>
+      </div>
+      <%= f.submit t("dispatch.actions.save"), class: "btn" %>
+    <% end %>
+  </div>
+<% elsif @booking.internal_notes.present? %>
+  <h2 class="section-title"><%= t("dispatch.fields.internal_notes") %></h2>
+  <div class="card"><%= simple_format(@booking.internal_notes) %></div>
+<% end %>
+
+<div class="grid grid--2" style="margin-top: 16px;">
+  <div class="card">
+    <h2><%= t("dispatch.sections.history") %></h2>
+    <ol class="timeline">
+      <% @events.each do |event| %>
+        <li>
+          <span class="muted"><%= l(event.created_at, format: :short_day) %></span>
+          <span>
+            <%= t("events.#{event.action}", default: event.action.humanize) %>
+            <% if event.to_status %> → <%= t("statuses.#{event.to_status}") %><% end %>
+            <span class="muted">· <%= event.actor_user&.name || t("actors.#{event.actor_type}") %></span>
+          </span>
+        </li>
+      <% end %>
+    </ol>
+  </div>
+  <div class="card">
+    <h2><%= t("dispatch.sections.messages") %></h2>
+    <% if @messages.any? %>
+      <ol class="timeline">
+        <% @messages.each do |message| %>
+          <li>
+            <span class="muted"><%= l(message.created_at, format: :short_day) %></span>
+            <span><span class="tag"><%= message.email? ? "✉ " : "" %><%= message.purpose.humanize %></span> <%= message.status %> → <span class="mono"><%= message.to %></span></span>
+          </li>
+        <% end %>
+      </ol>
+    <% else %>
+      <p class="muted"><%= t("dispatch.no_messages") %></p>
+    <% end %>
+    <% @calls.each do |call| %>
+      <p><%= link_to t("dispatch.view_call"), dispatch_call_path(call) %></p>
+    <% end %>
+  </div>
+</div>

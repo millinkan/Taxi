@@ -1,0 +1,5 @@
+<% content_for :title, t("public.privacy.title") %>
+<%# Template text. Each firm must have it reviewed before go-live (docs/PRIVACY.md). %>
+<div class="card stack">
+  <%= render "public/pages/privacy_#{I18n.locale == :en ? "en" : "de"}", tenant: current_tenant %>
+</div>

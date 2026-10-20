@@ -1,0 +1,198 @@
+<% content_for :title, t("public.title", firm: current_tenant.name) %>
+<% content_for :canonical, TenantUrls.new(current_tenant).booking_page unless @deal || @request.return_of.present? %>
+
+<section class="hero">
+  <% if @request.return_of.present? %>
+    <h1><%= t("public.booking.return_title") %></h1>
+    <p><%= t("public.booking.return_intro") %></p>
+  <% elsif @deal %>
+    <h1><%= t("public.deals.book_title") %></h1>
+    <p><%= t("public.deals.book_intro", price: money(@deal.price_cents)) %></p>
+  <% else %>
+    <h1><%= t("public.booking.headline", area: current_tenant.home_area_label) %></h1>
+    <p><%= t("public.booking.intro") %></p>
+  <% end %>
+  <ul class="trust">
+    <li><%= t("public.trust.fixed_prices") %></li>
+    <li><%= t("public.trust.sms_confirmation") %></li>
+    <li><%= t("public.trust.local") %></li>
+  </ul>
+</section>
+
+<% if current_tenant.asap_enabled? && !@deal && @request.return_of.blank? %>
+  <%= link_to site_path(:now), class: "now-banner" do %>
+    <strong>🚕 <%= t("public.now.banner_title") %></strong>
+    <span><%= t("public.now.banner_text", minutes: current_tenant.asap_response_minutes) %></span>
+  <% end %>
+<% end %>
+
+<% if @deals.any? && !@deal && @request.return_of.blank? %>
+  <h2 class="section-title"><%= t("public.deals.teaser") %></h2>
+  <div class="grid">
+    <% @deals.each do |deal| %>
+      <%= render "public/empty_legs/deal", deal: deal %>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="card" style="margin-top: 16px;">
+  <%= form_errors(@errors) if @errors %>
+
+  <%= form_with model: @request, scope: :booking, url: site_path(:bookings), method: :post,
+        data: { controller: "booking-form", booking_form_quote_url_value: site_path(:quote),
+                action: "change->booking-form#schedule input->booking-form#schedule" } do |f| %>
+    <%= f.hidden_field :return_of %>
+    <%= f.hidden_field :empty_leg_id %>
+
+    <fieldset>
+      <legend><%= t("public.booking.route") %></legend>
+
+      <div class="field">
+        <%= f.label :pickup_address, t("public.booking.pickup") %>
+        <%= f.text_field :pickup_address, required: true, autocomplete: "street-address",
+              placeholder: t("public.booking.address_placeholder"), readonly: @deal.present?,
+              data: { booking_form_target: "pickupAddress", action: "input->booking-form#clearPlace", field: "pickup" } %>
+        <%= f.hidden_field :pickup_place_id, data: { booking_form_target: "pickupPlaceId" } %>
+        <% unless @deal %>
+          <div class="chips">
+            <% @places.each do |place| %>
+              <button type="button" class="chip" data-action="booking-form#pick" data-field="pickup"
+                      data-place-id="<%= place.id %>" data-name="<%= place.name %>"><%= place.name %></button>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="field">
+        <%= f.label :dropoff_address, t("public.booking.dropoff") %>
+        <%= f.text_field :dropoff_address, required: true, autocomplete: "off",
+              placeholder: t("public.booking.address_placeholder"), readonly: @deal.present?,
+              data: { booking_form_target: "dropoffAddress", action: "input->booking-form#clearPlace", field: "dropoff" } %>
+        <%= f.hidden_field :dropoff_place_id, data: { booking_form_target: "dropoffPlaceId" } %>
+        <% unless @deal %>
+          <div class="chips">
+            <% @places.each do |place| %>
+              <button type="button" class="chip" data-action="booking-form#pick" data-field="dropoff"
+                      data-place-id="<%= place.id %>" data-name="<%= place.name %>"><%= place.name %></button>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend><%= t("public.booking.when") %></legend>
+      <div class="fields-2">
+        <div class="field">
+          <%= f.label :pickup_date, t("public.booking.date") %>
+          <%= f.date_field :pickup_date, required: true, min: Date.current.iso8601 %>
+        </div>
+        <div class="field">
+          <%= f.label :pickup_time, t("public.booking.time") %>
+          <%= f.time_field :pickup_time, required: true, step: 300 %>
+        </div>
+      </div>
+      <p class="field-hint">
+        <% if current_tenant.asap_enabled? %>
+          <%= t("public.booking.lead_time_hint_now", minutes: current_tenant.min_lead_minutes) %>
+          <%= link_to t("public.now.banner_title"), site_path(:now) %>
+        <% else %>
+          <%= t("public.booking.lead_time_hint", minutes: current_tenant.min_lead_minutes) %>
+        <% end %>
+      </p>
+    </fieldset>
+
+    <fieldset>
+      <legend><%= t("public.booking.details") %></legend>
+      <div class="fields-3">
+        <div class="field">
+          <%= f.label :passengers, t("public.booking.passengers") %>
+          <%= f.select :passengers, (1..8).to_a %>
+        </div>
+        <div class="field">
+          <%= f.label :luggage, t("public.booking.luggage") %>
+          <%= f.select :luggage, (0..8).to_a %>
+        </div>
+        <div class="field">
+          <%= f.label :vehicle_category, t("public.booking.vehicle") %>
+          <%= f.select :vehicle_category,
+                [ [ t("public.booking.vehicle_auto"), "" ] ] + VehicleCategory::ALL.map { |c| [ t("vehicle_categories.#{c}"), c ] },
+                {}, disabled: @deal.present? %>
+        </div>
+      </div>
+      <div class="field">
+        <%= f.label :flight_number, t("public.booking.flight") %>
+        <%= f.text_field :flight_number, placeholder: "LX 1234", autocapitalize: "characters" %>
+        <p class="field-hint"><%= t("public.booking.flight_hint") %></p>
+      </div>
+    </fieldset>
+
+    <div class="quote-box" hidden data-booking-form-target="quoteBox" aria-live="polite">
+      <div class="quote-box__price" data-booking-form-target="quotePrice"></div>
+      <div class="quote-box__meta" data-booking-form-target="quoteMeta"></div>
+    </div>
+
+    <fieldset>
+      <legend><%= t("public.booking.contact") %></legend>
+      <div class="field">
+        <%= f.label :name, t("public.booking.name") %>
+        <%= f.text_field :name, required: true, autocomplete: "name" %>
+      </div>
+      <div class="fields-2">
+        <div class="field">
+          <%= f.label :phone, t("public.booking.phone") %>
+          <%= f.telephone_field :phone, required: true, autocomplete: "tel", inputmode: "tel", placeholder: "+41 79 123 45 67" %>
+          <p class="field-hint"><%= t("public.booking.phone_hint") %></p>
+        </div>
+        <div class="field">
+          <%= f.label :email, t("public.booking.email") %>
+          <%= f.email_field :email, autocomplete: "email" %>
+        </div>
+      </div>
+      <div class="field">
+        <%= f.label :notes, t("public.booking.notes") %>
+        <%= f.text_area :notes, rows: 2, maxlength: 500, placeholder: t("public.booking.notes_placeholder") %>
+      </div>
+    </fieldset>
+
+    <div class="honeypot" aria-hidden="true">
+      <%= f.label :website, "Website" %>
+      <%= f.text_field :website, tabindex: -1, autocomplete: "off" %>
+    </div>
+
+    <%= f.submit t("public.booking.submit"), class: "btn btn--primary btn--block btn--lg",
+          data: { turbo_submits_with: t("public.booking.submitting") } %>
+    <p class="field-hint" style="text-align: center; margin-top: 10px;"><%= t("public.booking.payment_note") %></p>
+  <% end %>
+</div>
+
+<% if @route_pages.any? %>
+  <h2 class="section-title"><%= t("public.routes.list_title") %></h2>
+  <div class="card card--flush">
+    <% @route_pages.each do |route| %>
+      <%= link_to site_path(:route, route: route.to_param), class: "trip" do %>
+        <div class="row row--between">
+          <span><%= route.label %></span>
+          <strong><%= money(route.price_cents) %></strong>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if @localities.all.any? %>
+  <h2 class="section-title"><%= t("public.locality.areas_title", home: current_tenant.home_area_label) %></h2>
+  <div class="chips">
+    <% @localities.local.each do |place| %>
+      <%= link_to "Taxi #{place.name}", site_path(:locality, place: place.slug), class: "chip" %>
+    <% end %>
+  </div>
+  <% if @localities.remote.any? %>
+    <h2 class="section-title"><%= t("public.locality.transfers_title", home: current_tenant.home_area_label) %></h2>
+    <div class="chips">
+      <% @localities.remote.each do |place| %>
+        <%= link_to place.name, site_path(:locality, place: place.slug), class: "chip" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

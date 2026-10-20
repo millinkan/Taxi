@@ -1,0 +1,34 @@
+<% content_for :title, t("settings.nav.routes") %>
+<h1><%= t("settings.title") %></h1>
+<%= render "settings/nav" %>
+
+<div class="page-head">
+  <p class="muted" style="margin: 0;"><%= t("settings.routes.explain") %></p>
+  <%= link_to t("settings.routes.new"), new_settings_fixed_route_path, class: "btn btn--primary" %>
+</div>
+
+<div class="card card--flush table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th><%= t("settings.routes.route") %></th>
+        <th><%= t("settings.routes.vehicle") %></th>
+        <th class="num"><%= t("settings.routes.price") %></th>
+        <th><%= t("settings.routes.active") %></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @routes.each do |route| %>
+        <tr>
+          <td><%= link_to route.label, edit_settings_fixed_route_path(route) %></td>
+          <td><%= t("vehicle_categories.#{route.vehicle_category}") %></td>
+          <td class="num"><%= money(route.price_cents) %></td>
+          <td><%= route.active? ? "✓" : "—" %></td>
+          <td><%= button_to t("settings.delete"), settings_fixed_route_path(route), method: :delete, class: "btn btn--sm btn--bad",
+                    form: { data: { turbo_confirm: t("settings.routes.delete_confirm") } } %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

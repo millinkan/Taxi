@@ -1,0 +1,10 @@
+<%# Confirming a "taxi now" request means promising an arrival time. %>
+<div class="stack">
+  <strong><%= t("dispatch.asap.eta_prompt") %></strong>
+  <div class="eta-grid">
+    <% Bookings::Lifecycle::ETA_CHOICES.each do |minutes| %>
+      <%= button_to t("dispatch.asap.eta_minutes", count: minutes), url, params: { eta: minutes },
+            class: "btn btn--good btn--lg btn--block" %>
+    <% end %>
+  </div>
+</div>

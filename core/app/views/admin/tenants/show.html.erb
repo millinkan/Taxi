@@ -1,0 +1,42 @@
+<% content_for :title, @tenant.name %>
+<% urls = TenantUrls.new(@tenant) %>
+
+<div class="page-head">
+  <h1><%= @tenant.name %></h1>
+  <div class="row">
+    <%= link_to t("admin.edit"), edit_admin_tenant_path(@tenant), class: "btn" %>
+    <%= link_to t("admin.discovery.nav"), admin_tenant_discovery_path(@tenant), class: "btn" %>
+    <%= button_to t("admin.act_as"), act_as_admin_tenant_path(@tenant), class: "btn btn--primary" %>
+  </div>
+</div>
+
+<div class="grid grid--2">
+  <div class="card">
+    <h2><%= t("admin.sections.setup") %></h2>
+    <dl class="kv">
+      <dt><%= t("settings.firm.booking_page") %></dt>
+      <dd><%= link_to urls.booking_page, urls.booking_page, target: "_blank", rel: "noopener" %></dd>
+      <dt><%= t("admin.voice_number") %></dt>
+      <dd class="mono"><%= @tenant.voice_number.presence || "—" %></dd>
+      <dt><%= t("settings.firm.dispatcher_phone") %></dt>
+      <dd class="mono"><%= @tenant.dispatcher_phone.presence || "—" %></dd>
+      <dt><%= t("settings.firm.voice_agent_enabled") %></dt>
+      <dd><%= @tenant.voice_agent_enabled? ? "✓" : "—" %></dd>
+      <dt><%= t("settings.nav.places") %></dt>
+      <dd><%= @tenant.places.count %></dd>
+      <dt><%= t("settings.nav.routes") %></dt>
+      <dd><%= @tenant.fixed_routes.count %></dd>
+      <dt><%= t("settings.nav.vehicles") %></dt>
+      <dd><%= @tenant.vehicles.count %></dd>
+    </dl>
+  </div>
+  <div class="card">
+    <h2><%= t("admin.sections.users") %></h2>
+    <ul>
+      <% @owners.each do |user| %>
+        <li><%= user.name %> · <span class="mono"><%= user.email_address %></span> · <%= t("roles.#{user.role}") %></li>
+      <% end %>
+    </ul>
+    <p class="field-hint"><%= t("admin.users_hint") %></p>
+  </div>
+</div>

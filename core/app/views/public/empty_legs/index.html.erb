@@ -1,0 +1,19 @@
+<% content_for :title, t("public.deals.title", firm: current_tenant.name) %>
+
+<section class="hero">
+  <h1><%= t("public.deals.title", firm: current_tenant.name) %></h1>
+  <p><%= t("public.deals.intro") %></p>
+</section>
+
+<% if @deals.any? %>
+  <div class="grid">
+    <% @deals.each do |deal| %>
+      <%= render "deal", deal: deal %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="card empty">
+    <p><%= t("public.deals.none") %></p>
+    <%= link_to t("public.deals.book_regular"), site_path(:booking_page), class: "btn btn--primary" %>
+  </div>
+<% end %>

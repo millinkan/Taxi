@@ -1,0 +1,49 @@
+<% content_for :title, t("dispatch.deals.title") %>
+
+<div class="page-head">
+  <h1><%= t("dispatch.deals.title") %></h1>
+  <%= link_to t("dispatch.deals.public_page"), TenantUrls.new(current_tenant).deals_page, target: "_blank", rel: "noopener", class: "btn" %>
+</div>
+<p class="muted"><%= t("dispatch.deals.explain") %></p>
+
+<h2 class="section-title"><%= t("dispatch.deals.open") %></h2>
+<div class="card card--flush table-wrap">
+  <% if @open.any? %>
+    <table>
+      <thead><tr><th><%= t("dispatch.deals.route") %></th><th><%= t("dispatch.deals.window") %></th><th class="num"><%= t("dispatch.deals.price") %></th><th></th></tr></thead>
+      <tbody>
+        <% @open.each do |leg| %>
+          <tr>
+            <td><%= leg.origin_label %> → <%= leg.destination_label %>
+              <% if leg.source_booking %><br><small><%= link_to leg.source_booking.reference, dispatch_booking_path(leg.source_booking) %></small><% end %></td>
+            <td class="nowrap"><%= l(leg.available_from, format: :short_day) %> – <%= l(leg.available_until, format: :time) %></td>
+            <td class="num"><%= money(leg.price_cents) %></td>
+            <td><%= button_to t("dispatch.deals.withdraw"), dispatch_empty_leg_path(leg), method: :delete, class: "btn btn--sm btn--bad" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="empty"><%= t("dispatch.deals.none") %></p>
+  <% end %>
+</div>
+
+<h2 class="section-title"><%= t("dispatch.deals.history") %></h2>
+<div class="card card--flush table-wrap">
+  <% if @recent.any? %>
+    <table>
+      <tbody>
+        <% @recent.each do |leg| %>
+          <tr>
+            <td><%= leg.origin_label %> → <%= leg.destination_label %></td>
+            <td class="nowrap"><%= l(leg.available_from, format: :short_day) %></td>
+            <td><%= t("deal_statuses.#{leg.status}") %></td>
+            <td class="num"><%= leg.booking ? link_to(money(leg.price_cents), dispatch_booking_path(leg.booking)) : money(leg.price_cents) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="empty">—</p>
+  <% end %>
+</div>

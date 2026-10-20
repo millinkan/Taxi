@@ -1,0 +1,17 @@
+<h1>Privacy notice</h1>
+<p><strong>Controller:</strong> <%= tenant.legal_name.presence || tenant.name %><%= ", #{tenant.email}" if tenant.email.present? %><%= ", #{PhoneNumber.display(tenant.public_phone)}" if tenant.public_phone.present? %></p>
+
+<h2>What we process</h2>
+<p>For your ride we process your name, phone number, optionally your e-mail, pickup and destination, time, number of passengers, flight number and your notes. When you call us we process your number and, if our digital phone assistant answers, the conversation as text in order to take your booking.</p>
+
+<h2>Purpose</h2>
+<p>Only to carry out and invoice your ride, to confirm it by SMS (and by e-mail if you gave us your address) and, once after the ride, to ask for a review. We never pass your data on for advertising.</p>
+
+<h2>Service providers</h2>
+<p>We use technical providers: hosting of the booking platform, Twilio (telephony and SMS), an e-mail delivery service, Anthropic (language understanding for the phone assistant) and a map service to locate addresses and calculate prices. They process data only on our behalf. Data may be transferred to countries outside the EEA or Switzerland; this happens on the basis of appropriate safeguards (e.g. standard contractual clauses).</p>
+
+<h2>Retention</h2>
+<p>Personal data is anonymised after <%= tenant.data_retention_days %> days without a new booking. Records required for accounting are kept for the statutory period.</p>
+
+<h2>Your rights</h2>
+<p>You have the right of access, rectification, erasure, restriction and data portability, and the right to complain to the Liechtenstein Data Protection Authority or the Swiss FDPIC. Contact us at the address above.</p>

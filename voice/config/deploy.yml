@@ -1,0 +1,45 @@
+# Kamal deployment for the voice service. Deployed with the core's Kamal:
+#   cd core && bin/kamal deploy -c ../voice/config/deploy.yml
+# It can share the core's server; kamal-proxy routes by host name and
+# passes the ConversationRelay websocket through.
+service: ridedesk-voice
+image: REPLACE-registry-user/ridedesk-voice
+
+servers:
+  web:
+    - REPLACE.SERVER.IP
+
+proxy:
+  ssl: true
+  host: voice.REPLACE-DOMAIN.li
+  app_port: 80
+  healthcheck:
+    path: /healthz
+  # Phone calls can last several minutes; do not cut long-lived websockets.
+  response_timeout: 900
+
+registry:
+  server: ghcr.io
+  username: REPLACE-registry-user
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+  context: ../voice
+  dockerfile: ../voice/Dockerfile
+
+env:
+  secret:
+    - ANTHROPIC_API_KEY
+    - INTERNAL_API_TOKEN
+    - TWILIO_AUTH_TOKEN
+  clear:
+    PUBLIC_BASE_URL: https://voice.REPLACE-DOMAIN.li
+    CORE_API_URL: https://app.REPLACE-DOMAIN.li
+    CORE_PUBLIC_URL: https://app.REPLACE-DOMAIN.li
+    ANTHROPIC_MODEL: claude-opus-5-5
+    ANTHROPIC_EFFORT: medium
+    CR_LANGUAGE: de-DE
+    CR_SECONDARY_LANGUAGE: en-US
+    LOG_LEVEL: info

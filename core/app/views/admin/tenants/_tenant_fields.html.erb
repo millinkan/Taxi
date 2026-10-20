@@ -1,0 +1,43 @@
+<div class="fields-2">
+  <div class="field"><%= f.label :name, t("settings.firm.name") %><%= f.text_field :name, required: true %></div>
+  <div class="field">
+    <%= f.label :slug, t("admin.slug") %><%= f.text_field :slug, required: true, pattern: "[a-z0-9]+(-[a-z0-9]+)*" %>
+    <p class="field-hint"><%= t("admin.slug_hint") %></p>
+  </div>
+</div>
+<div class="fields-2">
+  <div class="field"><%= f.label :legal_name, t("settings.firm.legal_name") %><%= f.text_field :legal_name %></div>
+  <div class="field"><%= f.label :licence_number, t("settings.firm.licence_number") %><%= f.text_field :licence_number %></div>
+</div>
+<div class="fields-2">
+  <div class="field"><%= f.label :public_phone, t("settings.firm.public_phone") %><%= f.telephone_field :public_phone %></div>
+  <div class="field"><%= f.label :email, t("settings.firm.email") %><%= f.email_field :email %></div>
+</div>
+<div class="fields-2">
+  <div class="field"><%= f.label :dispatcher_name, t("settings.firm.dispatcher_name") %><%= f.text_field :dispatcher_name %></div>
+  <div class="field"><%= f.label :dispatcher_phone, t("settings.firm.dispatcher_phone") %><%= f.telephone_field :dispatcher_phone, required: true %></div>
+</div>
+<div class="fields-2">
+  <div class="field">
+    <%= f.label :voice_number, t("admin.voice_number") %><%= f.telephone_field :voice_number %>
+    <p class="field-hint"><%= t("admin.voice_number_hint") %></p>
+  </div>
+  <div class="field"><%= f.label :sms_sender_id, t("settings.firm.sms_sender_id") %><%= f.text_field :sms_sender_id, maxlength: 11 %></div>
+</div>
+<div class="fields-2">
+  <div class="field">
+    <%= f.label :custom_domain, t("admin.custom_domain") %><%= f.text_field :custom_domain, placeholder: "buchen.taxi-beispiel.li" %>
+  </div>
+  <div class="field">
+    <%= f.label :status, t("admin.status") %>
+    <%= f.select :status, Tenant::STATUSES.map { |s| [ t("tenant_statuses.#{s}"), s ] } %>
+  </div>
+</div>
+<div class="field">
+  <%= f.label :google_business_url, t("settings.firm.google_business_url") %><%= f.url_field :google_business_url, placeholder: "https://maps.app.goo.gl/…" %>
+  <p class="field-hint"><%= t("settings.firm.google_business_hint") %></p>
+</div>
+<div class="fields-2">
+  <div class="field"><%= f.label :default_locale, t("settings.firm.default_locale") %><%= f.select :default_locale, Tenant::LOCALES.map { |l| [ l.upcase, l ] } %></div>
+  <label class="checkbox" style="margin-top: 28px;"><%= f.check_box :voice_agent_enabled %> <%= t("settings.firm.voice_agent_enabled") %></label>
+</div>

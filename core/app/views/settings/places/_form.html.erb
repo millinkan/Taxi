@@ -1,0 +1,24 @@
+<%= form_with model: [ :settings, place ] do |f| %>
+  <%= form_errors(place.errors) %>
+  <div class="fields-2">
+    <div class="field"><%= f.label :name, t("settings.places.name") %><%= f.text_field :name, required: true %></div>
+    <div class="field"><%= f.label :kind, t("settings.places.kind") %><%= f.select :kind, Place::KINDS.map { |k| [ t("place_kinds.#{k}"), k ] } %></div>
+  </div>
+  <div class="field"><%= f.label :address, t("settings.places.address") %><%= f.text_field :address %></div>
+  <div class="fields-3">
+    <div class="field"><%= f.label :lat, t("settings.firm.lat") %><%= f.number_field :lat, step: "0.000001", required: true %></div>
+    <div class="field"><%= f.label :lng, t("settings.firm.lng") %><%= f.number_field :lng, step: "0.000001", required: true %></div>
+    <div class="field"><%= f.label :radius_m, t("settings.places.radius") %><%= f.number_field :radius_m, min: 50, max: 50000 %></div>
+  </div>
+  <p class="field-hint"><%= t("settings.places.coords_hint") %></p>
+  <div class="field">
+    <%= f.label :aliases, t("settings.places.aliases") %><%= f.text_field :aliases %>
+    <p class="field-hint"><%= t("settings.places.aliases_hint") %></p>
+  </div>
+  <div class="fields-2">
+    <label class="checkbox"><%= f.check_box :featured %> <%= t("settings.places.featured_long") %></label>
+    <div class="field"><%= f.label :position, t("settings.places.position") %><%= f.number_field :position %></div>
+  </div>
+  <%= f.submit t("settings.save"), class: "btn btn--primary" %>
+  <%= link_to t("settings.back"), settings_places_path, class: "btn" %>
+<% end %>

@@ -1,0 +1,140 @@
+<% content_for :title, t("admin.discovery.title", name: @tenant.name) %>
+<% urls = @profile.urls %>
+<% links = @profile.google_profile_links %>
+
+<div class="page-head">
+  <div>
+    <h1><%= t("admin.discovery.title", name: @tenant.name) %></h1>
+    <%= link_to t("admin.discovery.back"), admin_tenant_path(@tenant), class: "muted" %>
+  </div>
+  <%= button_to t("admin.discovery.push"), admin_tenant_discovery_path(@tenant), class: "btn btn--primary",
+        disabled: !@profile.ready? %>
+</div>
+<p class="field-hint"><%= t("admin.discovery.push_explain") %></p>
+
+<div class="grid grid--kpi" style="margin: 16px 0;">
+  <div class="card stat"><span class="stat__label"><%= t("admin.discovery.stats.google_profile") %></span><span class="stat__value"><%= @stats[:google_profile] %></span></div>
+  <div class="card stat"><span class="stat__label"><%= t("admin.discovery.stats.ai") %></span><span class="stat__value"><%= @stats[:ai] %></span></div>
+  <div class="card stat"><span class="stat__label"><%= t("admin.discovery.stats.asap") %></span><span class="stat__value"><%= @stats[:asap_confirmed] %> / <%= @stats[:asap] %></span></div>
+</div>
+
+<div class="layout-split">
+<aside class="layout-split__aside stack">
+  <div class="card">
+    <h2><%= t("admin.discovery.readiness") %></h2>
+    <ul class="checklist">
+      <% @profile.checks.each do |check| %>
+        <li class="<%= check[:ok] ? "is-ok" : "is-missing" %>">
+          <strong><%= check[:ok] ? "✓" : "✗" %> <%= t("admin.discovery.checks.#{check[:key]}.label") %></strong>
+          <% unless check[:ok] %><br><small class="muted"><%= t("admin.discovery.checks.#{check[:key]}.fix") %></small><% end %>
+        </li>
+      <% end %>
+    </ul>
+    <p class="field-hint"><%= t("admin.discovery.readiness_hint") %></p>
+  </div>
+
+  <div class="card">
+    <h2><%= t("admin.discovery.service_areas.title") %></h2>
+    <p><%= t("admin.discovery.service_areas.intro") %></p>
+    <p class="mono"><%= @profile.localities.local.select { |place| place.kind == "town" }.first(20).map(&:name).join(", ") %></p>
+    <p class="field-hint"><%= t("admin.discovery.service_areas.hint") %></p>
+  </div>
+</aside>
+
+<div class="stack">
+<div class="grid grid--2">
+  <div class="card">
+    <h2><%= t("admin.discovery.google.title") %></h2>
+    <p><%= t("admin.discovery.google.intro") %></p>
+    <dl class="kv kv--stack">
+      <dt><%= t("admin.discovery.google.website") %></dt>
+      <dd class="mono"><%= link_to links[:website], links[:website], target: "_blank", rel: "noopener" %></dd>
+      <dt><%= t("admin.discovery.google.order") %></dt>
+      <dd class="mono"><%= link_to links[:order], links[:order], target: "_blank", rel: "noopener" %></dd>
+      <dt><%= t("admin.discovery.google.booking") %></dt>
+      <dd class="mono"><%= link_to links[:booking], links[:booking], target: "_blank", rel: "noopener" %></dd>
+    </dl>
+    <p class="field-hint"><%= t("admin.discovery.google.hint") %></p>
+    <% if (profile_url = external_https_url(@tenant.google_business_url)) %>
+      <p><%= link_to t("admin.discovery.google.open_profile"), profile_url, target: "_blank", rel: "noopener", class: "btn btn--sm" %></p>
+    <% end %>
+  </div>
+
+  <div class="card">
+    <h2><%= t("admin.discovery.ai.title") %></h2>
+    <p><%= t("admin.discovery.ai.intro") %></p>
+    <dl class="kv kv--stack">
+      <dt>llms.txt</dt>
+      <dd class="mono"><%= link_to urls.llms_txt, urls.llms_txt, target: "_blank", rel: "noopener" %></dd>
+      <dt>discovery.json</dt>
+      <dd class="mono"><%= link_to urls.discovery_feed, urls.discovery_feed, target: "_blank", rel: "noopener" %></dd>
+      <dt>sitemap.xml</dt>
+      <dd class="mono"><%= link_to urls.sitemap, urls.sitemap, target: "_blank", rel: "noopener" %></dd>
+      <dt><%= t("admin.discovery.ai.now_template") %></dt>
+      <dd class="mono"><%= @profile.now_url_template(Discovery::Profile::AI_UTM) %></dd>
+    </dl>
+    <p class="field-hint"><%= t("admin.discovery.ai.hint", routes: @profile.route_pages.size) %></p>
+  </div>
+</div>
+
+  <div class="card">
+    <h2><%= t("admin.discovery.coverage.title") %></h2>
+    <p><%= t("admin.discovery.coverage.summary", local: @profile.localities.local.size, remote: @profile.localities.remote.size,
+             routes: @profile.route_pages.size, keywords: @keywords.all.size) %></p>
+    <div class="chips">
+      <% @profile.localities.local.each do |place| %>
+        <%= link_to "Taxi #{place.name}", @profile.urls.locality_page(place), class: "chip", target: "_blank", rel: "noopener" %>
+      <% end %>
+    </div>
+    <details style="margin-top: 12px;">
+      <summary><%= t("admin.discovery.coverage.show_keywords", count: @keywords.all.size) %></summary>
+      <div class="table-wrap" style="max-height: 420px; overflow: auto;">
+        <table>
+          <thead><tr><th><%= t("admin.discovery.coverage.keyword") %></th><th><%= t("admin.discovery.coverage.page") %></th></tr></thead>
+          <tbody>
+            <% @keywords.all.each do |keyword| %>
+              <tr><td><%= keyword.phrase %></td><td class="mono"><small><%= keyword.url.delete_prefix(@profile.urls.public_base).presence || "/" %></small></td></tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <div class="row" style="margin-top: 12px; flex-wrap: wrap;">
+      <%= link_to t("admin.discovery.coverage.download"), admin_tenant_discovery_path(@tenant, format: :csv), class: "btn btn--sm" %>
+      <%= form_with url: sync_places_admin_tenant_discovery_path(@tenant), class: "row" do |f| %>
+        <%= f.select :region, @regions, {}, "aria-label": t("admin.region") %>
+        <%= f.submit t("admin.discovery.coverage.sync"), class: "btn btn--sm" %>
+      <% end %>
+    </div>
+    <p class="field-hint"><%= t("admin.discovery.coverage.hint") %></p>
+  </div>
+
+  <div class="card card--flush table-wrap">
+    <h2 style="padding: 16px 16px 0;"><%= t("admin.discovery.log.title") %></h2>
+    <% if @pushes.any? %>
+      <table>
+        <thead>
+          <tr>
+            <th><%= t("admin.discovery.log.when") %></th>
+            <th><%= t("admin.discovery.log.channel") %></th>
+            <th><%= t("admin.discovery.log.status") %></th>
+            <th class="num"><%= t("admin.discovery.log.urls") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @pushes.each do |push| %>
+            <tr>
+              <td><%= l(push.created_at.in_time_zone(@tenant.time_zone), format: :short_day) %></td>
+              <td><%= t("admin.discovery.channels.#{push.channel}") %><br><small class="muted"><%= push.automatic? ? t("admin.discovery.log.automatic") : push.user&.name %></small></td>
+              <td><%= t("admin.discovery.statuses.#{push.status}") %><% if push.detail %><br><small class="muted"><%= push.detail %></small><% end %></td>
+              <td class="num"><%= push.urls_count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="empty"><%= t("admin.discovery.log.empty") %></p>
+    <% end %>
+  </div>
+</div>
+</div>

@@ -1,0 +1,50 @@
+<% content_for :title, t("dispatch.board.title") %>
+<%# Re-poll every 60s so a board left open on a tablet stays current. %>
+<meta http-equiv="refresh" content="60">
+
+<div class="page-head">
+  <h1><%= t("dispatch.board.title") %></h1>
+  <div class="row">
+    <span class="muted"><%= t("dispatch.board.done_today", count: @done_today) %></span>
+    <% if @open_deals.positive? %><%= link_to t("dispatch.board.open_deals", count: @open_deals), dispatch_empty_legs_path, class: "tag" %><% end %>
+    <% if current_user.can_dispatch? %>
+      <%= link_to "📍 #{t("dispatch.live.title")}", dispatch_live_path, class: "btn" %>
+      <%= link_to t("staff.nav.new_booking"), new_dispatch_booking_path, class: "btn btn--primary" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid grid--3 board">
+  <section>
+    <h2 class="section-title"><%= t("dispatch.board.pending", count: @pending.size) %></h2>
+    <div class="card card--flush">
+      <% if @pending.any? %>
+        <% @pending.each do |trip| %><%= render "dispatch/trip", trip: trip %><% end %>
+      <% else %>
+        <p class="empty"><%= t("dispatch.board.no_pending") %></p>
+      <% end %>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title"><%= t("dispatch.board.today", count: @today.size) %></h2>
+    <div class="card card--flush">
+      <% if @today.any? %>
+        <% @today.each do |trip| %><%= render "dispatch/trip", trip: trip %><% end %>
+      <% else %>
+        <p class="empty"><%= t("dispatch.board.nothing_today") %></p>
+      <% end %>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title"><%= t("dispatch.board.upcoming", count: @upcoming.size) %></h2>
+    <div class="card card--flush">
+      <% if @upcoming.any? %>
+        <% @upcoming.each do |trip| %><%= render "dispatch/trip", trip: trip %><% end %>
+      <% else %>
+        <p class="empty"><%= t("dispatch.board.nothing_upcoming") %></p>
+      <% end %>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,42 @@
+<% content_for :title, t("dispatch.calls.title") %>
+
+<div class="page-head">
+  <div>
+    <h1><%= @call.customer&.display_name || PhoneNumber.display(@call.from_number) %></h1>
+    <span class="muted"><%= l(@call.created_at, format: :long_day) %><% if @call.duration_s %> · <%= (@call.duration_s / 60.0).ceil %> min<% end %></span>
+  </div>
+  <span class="tag"><%= t("call_outcomes.#{@call.outcome}") %></span>
+</div>
+
+<div class="card stack">
+  <dl class="kv">
+    <dt><%= t("dispatch.calls.caller") %></dt>
+    <dd><%= phone_link(@call.from_number) %></dd>
+    <dt><%= t("dispatch.calls.handled_by") %></dt>
+    <dd><%= t("call_handlers.#{@call.handled_by}") %></dd>
+    <% if @call.booking %>
+      <dt><%= t("dispatch.calls.booking") %></dt>
+      <dd><%= link_to @call.booking.reference, dispatch_booking_path(@call.booking) %></dd>
+    <% end %>
+    <% if @call.summary.present? %>
+      <dt><%= t("dispatch.calls.summary") %></dt>
+      <dd><%= @call.summary %></dd>
+    <% end %>
+    <% if @call.recording_url.present? %>
+      <dt><%= t("dispatch.calls.voicemail") %></dt>
+      <dd><audio controls preload="none" src="<%= @call.recording_url %>.mp3"></audio></dd>
+    <% end %>
+  </dl>
+</div>
+
+<% if @call.transcript.present? %>
+  <h2 class="section-title"><%= t("dispatch.calls.transcript") %></h2>
+  <div class="card transcript">
+    <% @call.transcript.each do |turn| %>
+      <div class="transcript__turn transcript__turn--<%= turn["role"] %>">
+        <small><%= t("dispatch.calls.roles.#{turn["role"]}") %></small><br>
+        <%= turn["text"] %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

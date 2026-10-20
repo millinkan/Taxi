@@ -1,0 +1,113 @@
+# Regional template: Liechtenstein and the Rhine valley.
+#
+# Applied when a firm is onboarded with region "liechtenstein". It gives the
+# firm a working price list on day one; the firm then adjusts prices in
+# Settings. All prices are STARTING POINTS in CHF and must be confirmed with
+# the firm before go-live. Coordinates are approximate centre points; each
+# place's radius defines its catchment area for fixed-price matching.
+
+tenant_defaults:
+  time_zone: Europe/Vaduz
+  currency: CHF
+  default_locale: de
+  service_center_lat: 47.1410
+  service_center_lng: 9.5209
+  service_radius_km: 15
+  home_area_label: Liechtenstein
+
+# Metered tariffs (Rappen). Used for every trip without a fixed price.
+tariffs:
+  standard:
+    base_fare_cents: 800
+    per_km_cents: 380
+    per_minute_cents: 0
+    minimum_fare_cents: 2000
+    night_surcharge_percent: 20
+    night_starts_at: "22:00"
+    night_ends_at: "06:00"
+    rounding_cents: 100
+  van:
+    base_fare_cents: 1200
+    per_km_cents: 480
+    per_minute_cents: 0
+    minimum_fare_cents: 3000
+    night_surcharge_percent: 20
+    night_starts_at: "22:00"
+    night_ends_at: "06:00"
+    rounding_cents: 100
+  premium:
+    base_fare_cents: 1500
+    per_km_cents: 550
+    per_minute_cents: 0
+    minimum_fare_cents: 4000
+    night_surcharge_percent: 20
+    night_starts_at: "22:00"
+    night_ends_at: "06:00"
+    rounding_cents: 100
+
+places:
+  # The whole country as one catchment area, for fixed long-distance prices.
+  - { name: "Liechtenstein", kind: town, lat: 47.1410, lng: 9.5209, radius_m: 14000, featured: false,
+      aliases: "Fürstentum Liechtenstein, FL, Principality of Liechtenstein" }
+  - { name: "Vaduz", kind: town, lat: 47.1410, lng: 9.5209, radius_m: 2000, featured: true, aliases: "Vaduz Zentrum, Städtle" }
+  - { name: "Schaan", kind: town, lat: 47.1650, lng: 9.5096, radius_m: 2000, featured: true }
+  - { name: "Triesen", kind: town, lat: 47.1070, lng: 9.5280, radius_m: 2000, featured: false }
+  - { name: "Balzers", kind: town, lat: 47.0667, lng: 9.5025, radius_m: 2000, featured: false }
+  - { name: "Triesenberg", kind: town, lat: 47.1180, lng: 9.5420, radius_m: 2000, featured: false }
+  - { name: "Eschen", kind: town, lat: 47.2107, lng: 9.5228, radius_m: 2000, featured: false }
+  - { name: "Mauren", kind: town, lat: 47.2189, lng: 9.5427, radius_m: 2000, featured: false }
+  - { name: "Ruggell", kind: town, lat: 47.2380, lng: 9.5250, radius_m: 2000, featured: false }
+  - { name: "Gamprin", kind: town, lat: 47.2203, lng: 9.5091, radius_m: 1200, featured: false }
+  - { name: "Schellenberg", kind: town, lat: 47.2310, lng: 9.5470, radius_m: 1500, featured: false }
+  - { name: "Planken", kind: town, lat: 47.1853, lng: 9.5440, radius_m: 1200, featured: false }
+  # Villages people search for by name, not by municipality.
+  - { name: "Bendern", kind: town, lat: 47.2120, lng: 9.5060, radius_m: 1000, featured: false, aliases: "Bendern Gamprin" }
+  - { name: "Nendeln", kind: town, lat: 47.1980, lng: 9.5430, radius_m: 1000, featured: false }
+  - { name: "Schaanwald", kind: town, lat: 47.2140, lng: 9.5640, radius_m: 1000, featured: false }
+  - { name: "Mäls", kind: town, lat: 47.0590, lng: 9.4960, radius_m: 800, featured: false, aliases: "Maels, Mals" }
+  - { name: "Steg", kind: resort, lat: 47.1100, lng: 9.5700, radius_m: 800, featured: false }
+  - { name: "Masescha", kind: resort, lat: 47.1330, lng: 9.5490, radius_m: 700, featured: false, aliases: "Silum, Gaflei" }
+  - { name: "Malbun", kind: resort, lat: 47.1030, lng: 9.6090, radius_m: 1500, featured: false }
+  - { name: "Bahnhof Schaan-Vaduz", kind: station, lat: 47.1645, lng: 9.5080, radius_m: 300, featured: false,
+      aliases: "Schaan Bahnhof, Bahnhof Schaan, Schaan-Vaduz" }
+  # Neighbouring Swiss and Austrian towns with daily traffic to Liechtenstein.
+  - { name: "Buchs SG", kind: town, lat: 47.1660, lng: 9.4760, radius_m: 2000, featured: false, aliases: "Buchs" }
+  - { name: "Sevelen", kind: town, lat: 47.1220, lng: 9.4870, radius_m: 1500, featured: false }
+  - { name: "Grabs", kind: town, lat: 47.1830, lng: 9.4440, radius_m: 1500, featured: false }
+  - { name: "Gams", kind: town, lat: 47.2040, lng: 9.4410, radius_m: 1500, featured: false }
+  - { name: "Trübbach", kind: town, lat: 47.0720, lng: 9.4790, radius_m: 1200, featured: false, aliases: "Truebbach, Wartau" }
+  - { name: "Sargans", kind: town, lat: 47.0480, lng: 9.4430, radius_m: 1500, featured: false }
+  - { name: "Feldkirch", kind: town, lat: 47.2380, lng: 9.5970, radius_m: 2500, featured: false }
+  - { name: "Bahnhof Buchs SG", kind: station, lat: 47.1680, lng: 9.4786, radius_m: 600, featured: true,
+      aliases: "Buchs Bahnhof, Buchs SG, Buchs station" }
+  - { name: "Bahnhof Sargans", kind: station, lat: 47.0440, lng: 9.4460, radius_m: 600, featured: true,
+      aliases: "Sargans Bahnhof, Sargans station" }
+  - { name: "Bahnhof Feldkirch", kind: station, lat: 47.2410, lng: 9.6010, radius_m: 600, featured: false,
+      aliases: "Feldkirch Bahnhof, Feldkirch station" }
+  - { name: "Flughafen Zürich", kind: airport, lat: 47.4505, lng: 8.5621, radius_m: 2500, featured: true,
+      aliases: "Zürich Flughafen, Zurich Airport, Flughafen Zurich, ZRH, Kloten" }
+  - { name: "Flughafen St. Gallen-Altenrhein", kind: airport, lat: 47.4850, lng: 9.5610, radius_m: 1500, featured: false,
+      aliases: "Altenrhein, St. Gallen Airport, ACH, People's Airport" }
+  - { name: "Flughafen Friedrichshafen", kind: airport, lat: 47.6713, lng: 9.5115, radius_m: 1500, featured: false,
+      aliases: "Friedrichshafen Airport, FDH, Bodensee Airport" }
+  - { name: "Flughafen Innsbruck", kind: airport, lat: 47.2602, lng: 11.3440, radius_m: 1500, featured: false,
+      aliases: "Innsbruck Airport, INN, Kranebitten" }
+  - { name: "Bad Ragaz", kind: hotel, lat: 47.0040, lng: 9.5040, radius_m: 1500, featured: false,
+      aliases: "Grand Resort Bad Ragaz, Ragaz" }
+  - { name: "Chur", kind: town, lat: 46.8508, lng: 9.5320, radius_m: 3000, featured: false, aliases: "Chur Bahnhof" }
+  - { name: "St. Gallen", kind: town, lat: 47.4245, lng: 9.3767, radius_m: 3000, featured: false, aliases: "Sankt Gallen, St Gallen" }
+  - { name: "Davos", kind: resort, lat: 46.8027, lng: 9.8360, radius_m: 4000, featured: false, aliases: "Davos Platz, Davos Dorf, WEF" }
+  - { name: "Lech am Arlberg", kind: resort, lat: 47.2083, lng: 10.1420, radius_m: 3000, featured: false, aliases: "Lech, Zürs, Oberlech" }
+  - { name: "St. Anton am Arlberg", kind: resort, lat: 47.1297, lng: 10.2685, radius_m: 3000, featured: false, aliases: "St. Anton, Sankt Anton" }
+
+# Fixed prices in CHF per vehicle category, valid in both directions.
+fixed_routes:
+  - { from: "Liechtenstein", to: "Flughafen Zürich", prices: { standard: 290, van: 380, premium: 420 } }
+  - { from: "Liechtenstein", to: "Flughafen St. Gallen-Altenrhein", prices: { standard: 120, van: 160, premium: 180 } }
+  - { from: "Liechtenstein", to: "Flughafen Friedrichshafen", prices: { standard: 180, van: 240, premium: 270 } }
+  - { from: "Liechtenstein", to: "Flughafen Innsbruck", prices: { standard: 380, van: 480, premium: 540 } }
+  - { from: "Liechtenstein", to: "Davos", prices: { standard: 220, van: 290, premium: 320 } }
+  - { from: "Liechtenstein", to: "Lech am Arlberg", prices: { standard: 220, van: 290, premium: 320 } }
+  - { from: "Liechtenstein", to: "St. Anton am Arlberg", prices: { standard: 230, van: 300, premium: 330 } }
+  - { from: "Liechtenstein", to: "St. Gallen", prices: { standard: 140, van: 180, premium: 200 } }
+  - { from: "Liechtenstein", to: "Chur", prices: { standard: 110, van: 150, premium: 170 } }

@@ -1,0 +1,89 @@
+<% content_for :title, t("public.now.title", firm: current_tenant.name, area: current_tenant.home_area_label) %>
+<% content_for :description, t("public.now.meta_description", firm: current_tenant.name, area: current_tenant.home_area_label, minutes: current_tenant.asap_response_minutes) %>
+<% content_for :canonical, TenantUrls.new(current_tenant).now_page %>
+<% phone = current_tenant.public_phone.presence || current_tenant.dispatcher_phone %>
+
+<section class="hero">
+  <h1><%= t("public.now.headline", area: current_tenant.home_area_label) %></h1>
+  <p><%= t("public.now.intro", minutes: current_tenant.asap_response_minutes) %></p>
+  <% if phone.present? %>
+    <a class="btn btn--block" href="tel:<%= phone %>">📞 <%= t("public.now.call_instead", phone: PhoneNumber.display(phone)) %></a>
+  <% end %>
+</section>
+
+<div class="card" style="margin-top: 16px;">
+  <%= form_errors(@errors) if @errors %>
+
+  <%= form_with model: @request, scope: :booking, url: site_path(:bookings), method: :post,
+        data: { controller: "booking-form", booking_form_quote_url_value: site_path(:quote),
+                action: "change->booking-form#schedule input->booking-form#schedule" } do |f| %>
+    <%= f.hidden_field :asap, value: "1" %>
+
+    <div class="field">
+      <%= f.label :pickup_address, t("public.now.pickup") %>
+      <div class="row">
+        <%= f.text_field :pickup_address, required: true, autocomplete: "street-address", style: "flex: 1;",
+              placeholder: t("public.booking.address_placeholder"),
+              data: { booking_form_target: "pickupAddress", action: "input->booking-form#clearPlace", field: "pickup" } %>
+        <button type="button" class="btn" data-action="booking-form#locate" data-booking-form-target="locateButton"
+                data-label="<%= t("public.now.my_location") %>" data-failed="<%= t("public.now.locate_failed") %>">
+          📍 <%= t("public.now.locate") %>
+        </button>
+      </div>
+      <%= f.hidden_field :pickup_place_id, data: { booking_form_target: "pickupPlaceId" } %>
+      <%= f.hidden_field :pickup_lat, data: { booking_form_target: "pickupLat" } %>
+      <%= f.hidden_field :pickup_lng, data: { booking_form_target: "pickupLng" } %>
+      <p class="field-hint" data-booking-form-target="locateStatus" aria-live="polite"><%= t("public.now.pickup_hint") %></p>
+    </div>
+
+    <div class="field">
+      <%= f.label :dropoff_address, t("public.booking.dropoff") %>
+      <%= f.text_field :dropoff_address, required: true, autocomplete: "off",
+            placeholder: t("public.booking.address_placeholder"),
+            data: { booking_form_target: "dropoffAddress", action: "input->booking-form#clearPlace", field: "dropoff" } %>
+      <%= f.hidden_field :dropoff_place_id, data: { booking_form_target: "dropoffPlaceId" } %>
+      <div class="chips">
+        <% @places.each do |place| %>
+          <button type="button" class="chip" data-action="booking-form#pick" data-field="dropoff"
+                  data-place-id="<%= place.id %>" data-name="<%= place.name %>"><%= place.name %></button>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="quote-box" hidden data-booking-form-target="quoteBox" aria-live="polite">
+      <div class="quote-box__price" data-booking-form-target="quotePrice"></div>
+      <div class="quote-box__meta" data-booking-form-target="quoteMeta"></div>
+    </div>
+
+    <div class="fields-2">
+      <div class="field">
+        <%= f.label :name, t("public.booking.name") %>
+        <%= f.text_field :name, required: true, autocomplete: "name" %>
+      </div>
+      <div class="field">
+        <%= f.label :passengers, t("public.booking.passengers") %>
+        <%= f.select :passengers, (1..8).to_a %>
+      </div>
+    </div>
+    <div class="field">
+      <%= f.label :phone, t("public.booking.phone") %>
+      <%= f.telephone_field :phone, required: true, autocomplete: "tel", inputmode: "tel", placeholder: "+41 79 123 45 67" %>
+      <p class="field-hint"><%= t("public.now.phone_hint") %></p>
+    </div>
+    <div class="field">
+      <%= f.label :notes, t("public.now.notes") %>
+      <%= f.text_field :notes, maxlength: 500, placeholder: t("public.now.notes_placeholder") %>
+    </div>
+
+    <div class="honeypot" aria-hidden="true">
+      <%= f.label :website, "Website" %>
+      <%= f.text_field :website, tabindex: -1, autocomplete: "off" %>
+    </div>
+
+    <%= f.submit t("public.now.submit"), class: "btn btn--primary btn--block btn--lg",
+          data: { turbo_submits_with: t("public.booking.submitting") } %>
+    <p class="field-hint" style="text-align: center; margin-top: 10px;"><%= t("public.booking.payment_note") %></p>
+  <% end %>
+</div>
+
+<p style="text-align: center; margin-top: 16px;"><%= link_to t("public.now.book_later"), site_path(:booking_page) %></p>

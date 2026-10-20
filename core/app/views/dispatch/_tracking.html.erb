@@ -1,0 +1,17 @@
+<%# Driver side of live tracking. Starts by itself once the ride is under way. %>
+<% if booking.trackable? %>
+  <div class="card stack" data-controller="driver-tracking"
+       data-driver-tracking-token-value="<%= booking.dispatch_token %>"
+       data-driver-tracking-autostart-value="<%= booking.on_the_way? %>"
+       data-driver-tracking-texts-value="<%= t("dispatch.tracking.states").to_json %>">
+    <strong>📍 <%= t("dispatch.tracking.title") %></strong>
+    <p class="field-hint" style="margin: 0;"><%= t("dispatch.tracking.explain") %></p>
+    <button type="button" class="btn btn--primary btn--block" data-driver-tracking-target="start" data-action="driver-tracking#start">
+      <%= t("dispatch.tracking.start") %>
+    </button>
+    <button type="button" class="btn btn--block" hidden data-driver-tracking-target="stop" data-action="driver-tracking#stop">
+      <%= t("dispatch.tracking.stop") %>
+    </button>
+    <p class="muted" style="margin: 0;" data-driver-tracking-target="status" aria-live="polite"></p>
+  </div>
+<% end %>

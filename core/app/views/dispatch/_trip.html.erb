@@ -1,0 +1,19 @@
+<%= link_to dispatch_booking_path(trip), class: "trip #{"trip--pending" if trip.pending?} #{"trip--asap" if trip.asap? && trip.pending?}" do %>
+  <div class="row row--between">
+    <span class="trip__time">
+      <% if trip.asap? && trip.pending? %>🚕 <%= t("dispatch.asap.label") %><% else %><%= pickup_time(trip, format: (trip.local_pickup_at.to_date == Time.zone.today ? :time : :short_day)) %><% end %>
+    </span>
+    <span class="row" style="gap: 8px;">
+      <strong><%= booking_price(trip) %></strong>
+      <%= status_badge(trip) %>
+    </span>
+  </div>
+  <div class="trip__route"><%= trip.pickup_address %> → <%= trip.dropoff_address %></div>
+  <div class="trip__meta">
+    <span><%= trip.customer.display_name %></span>
+    <span><%= t("dispatch.party", pax: trip.passengers, bags: trip.luggage) %></span>
+    <% if trip.flight_number.present? %><span>✈ <%= trip.flight_number %></span><% end %>
+    <% if trip.vehicle %><span>🚕 <%= trip.vehicle.name %></span><% end %>
+    <span class="tag"><%= source_label(trip.source) %></span>
+  </div>
+<% end %>

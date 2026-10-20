@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <title><%= [ content_for(:title), current_tenant&.name, Rails.configuration.x.platform.name ].compact.join(" · ") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= render "shared/live_map_assets" if content_for?(:live_map) %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body style="--brand: <%= current_tenant&.brand_color || "#0f766e" %>; --brand-ink: <%= ink_on(current_tenant&.brand_color || "#0f766e") %>;">
+    <div class="shell">
+      <header class="app-header sidebar">
+        <%= link_to (current_tenant&.name || Rails.configuration.x.platform.name), root_path, class: "app-brand" %>
+        <nav class="app-nav" aria-label="<%= t("staff.nav.label") %>">
+          <% if current_tenant %>
+            <span class="app-nav__group"><%= t("staff.nav.groups.operations") %></span>
+            <%= nav_link t("staff.nav.board"), dispatch_root_path %>
+            <% if current_user.can_dispatch? %>
+              <%= nav_link t("staff.nav.new_booking"), new_dispatch_booking_path %>
+              <%= nav_link t("staff.nav.calls"), dispatch_calls_path, active: controller_path == "dispatch/calls" %>
+              <%= nav_link t("staff.nav.deals"), dispatch_empty_legs_path %>
+            <% end %>
+            <% if current_user.can_manage_settings? %>
+              <span class="app-nav__group"><%= t("staff.nav.groups.business") %></span>
+              <%= nav_link t("staff.nav.dashboard"), dashboard_path %>
+              <%= nav_link t("staff.nav.settings"), edit_settings_firm_path, active: controller_path.start_with?("settings/") %>
+            <% end %>
+          <% end %>
+          <% if current_user.platform_admin? %>
+            <span class="app-nav__group"><%= t("staff.nav.groups.platform") %></span>
+            <%= nav_link t("staff.nav.admin"), admin_tenants_path, active: controller_path.start_with?("admin/") %>
+          <% end %>
+        </nav>
+        <div class="sidebar__foot">
+          <div class="staff-lang" role="group" aria-label="<%= t("staff.language") %>">
+            <% Tenant::LOCALES.each do |code| %>
+              <%= button_to code.upcase, locale_path, method: :patch, params: { lang: code },
+                            class: "btn btn--sm", lang: code, "aria-pressed": I18n.locale.to_s == code %>
+            <% end %>
+          </div>
+          <%= button_to t("staff.sign_out"), session_path, method: :delete, class: "btn btn--sm" %>
+        </div>
+      </header>
+
+      <div class="shell__body">
+        <% if acting_as_tenant? %>
+          <div class="acting-banner">
+            <div class="container row row--between">
+              <span><%= t("staff.acting_as", name: current_tenant.name) %></span>
+              <%= button_to t("staff.stop_acting"), admin_stop_acting_path, method: :delete, class: "btn btn--sm" %>
+            </div>
+          </div>
+        <% end %>
+
+        <main>
+          <div class="container">
+            <%= render "shared/flash" %>
+            <%= yield %>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

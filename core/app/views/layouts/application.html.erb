@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <title><%= content_for(:title) || Rails.configuration.x.platform.name %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <main>
+      <div class="container container--narrow">
+        <div class="row row--between" style="margin: 24px 0;">
+          <p class="app-brand" style="margin: 0;"><%= Rails.configuration.x.platform.name %></p>
+          <nav class="lang-switch" aria-label="<%= t("staff.language") %>">
+            <% Tenant::LOCALES.each do |code| %>
+              <%= link_to code.upcase, url_for(lang: code), "aria-current": (I18n.locale.to_s == code ? "true" : nil), hreflang: code %>
+            <% end %>
+          </nav>
+        </div>
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </div>
+    </main>
+  </body>
+</html>

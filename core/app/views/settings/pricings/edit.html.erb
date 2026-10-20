@@ -1,0 +1,54 @@
+<% content_for :title, t("settings.nav.pricing") %>
+<h1><%= t("settings.title") %></h1>
+<%= render "settings/nav" %>
+<p class="muted"><%= t("settings.pricing.explain") %></p>
+
+<%= form_with url: settings_pricing_path, method: :patch do |f| %>
+  <% @tariffs.each { |tariff| concat form_errors(tariff.errors) } %>
+  <div class="grid grid--2">
+    <% @tariffs.each do |tariff| %>
+      <% c = tariff.vehicle_category %>
+      <% francs = ->(cents) { cents && format("%.2f", cents / 100.0) } %>
+      <div class="card">
+        <h2><%= t("vehicle_categories.#{c}") %></h2>
+        <div class="fields-2">
+          <div class="field">
+            <%= label_tag "tariffs_#{c}_base_fare", t("settings.pricing.base_fare", currency: current_tenant.currency) %>
+            <%= number_field_tag "tariffs[#{c}][base_fare]", francs.(tariff.base_fare_cents), step: "0.05", min: 0, id: "tariffs_#{c}_base_fare" %>
+          </div>
+          <div class="field">
+            <%= label_tag "tariffs_#{c}_per_km", t("settings.pricing.per_km", currency: current_tenant.currency) %>
+            <%= number_field_tag "tariffs[#{c}][per_km]", francs.(tariff.per_km_cents), step: "0.05", min: 0, id: "tariffs_#{c}_per_km" %>
+          </div>
+          <div class="field">
+            <%= label_tag "tariffs_#{c}_per_minute", t("settings.pricing.per_minute", currency: current_tenant.currency) %>
+            <%= number_field_tag "tariffs[#{c}][per_minute]", francs.(tariff.per_minute_cents), step: "0.05", min: 0, id: "tariffs_#{c}_per_minute" %>
+          </div>
+          <div class="field">
+            <%= label_tag "tariffs_#{c}_minimum_fare", t("settings.pricing.minimum_fare", currency: current_tenant.currency) %>
+            <%= number_field_tag "tariffs[#{c}][minimum_fare]", francs.(tariff.minimum_fare_cents), step: "0.05", min: 0, id: "tariffs_#{c}_minimum_fare" %>
+          </div>
+        </div>
+        <div class="fields-3">
+          <div class="field">
+            <%= label_tag "tariffs_#{c}_night", t("settings.pricing.night_surcharge") %>
+            <%= number_field_tag "tariffs[#{c}][night_surcharge_percent]", tariff.night_surcharge_percent, min: 0, max: 200, id: "tariffs_#{c}_night" %>
+          </div>
+          <div class="field">
+            <%= label_tag "tariffs_#{c}_night_from", t("settings.pricing.night_from") %>
+            <%= time_field_tag "tariffs[#{c}][night_starts_at]", tariff.night_starts_at, id: "tariffs_#{c}_night_from" %>
+          </div>
+          <div class="field">
+            <%= label_tag "tariffs_#{c}_night_to", t("settings.pricing.night_to") %>
+            <%= time_field_tag "tariffs[#{c}][night_ends_at]", tariff.night_ends_at, id: "tariffs_#{c}_night_to" %>
+          </div>
+        </div>
+        <div class="field">
+          <%= label_tag "tariffs_#{c}_rounding", t("settings.pricing.rounding", currency: current_tenant.currency) %>
+          <%= number_field_tag "tariffs[#{c}][rounding]", francs.(tariff.rounding_cents), step: "0.05", min: 0.05, id: "tariffs_#{c}_rounding" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <p style="margin-top: 16px;"><%= f.submit t("settings.save"), class: "btn btn--primary btn--lg" %></p>
+<% end %>

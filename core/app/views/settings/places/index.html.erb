@@ -1,0 +1,34 @@
+<% content_for :title, t("settings.nav.places") %>
+<h1><%= t("settings.title") %></h1>
+<%= render "settings/nav" %>
+
+<div class="page-head">
+  <p class="muted" style="margin: 0;"><%= t("settings.places.explain") %></p>
+  <%= link_to t("settings.places.new"), new_settings_place_path, class: "btn btn--primary" %>
+</div>
+
+<div class="card card--flush table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th><%= t("settings.places.name") %></th>
+        <th><%= t("settings.places.kind") %></th>
+        <th class="num"><%= t("settings.places.radius") %></th>
+        <th><%= t("settings.places.featured") %></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @places.each do |place| %>
+        <tr>
+          <td><%= link_to place.name, edit_settings_place_path(place) %><br><small><%= place.alias_list.join(", ") %></small></td>
+          <td><%= t("place_kinds.#{place.kind}") %></td>
+          <td class="num"><%= number_with_delimiter(place.radius_m) %> m</td>
+          <td><%= place.featured? ? "✓" : "" %></td>
+          <td><%= button_to t("settings.delete"), settings_place_path(place), method: :delete, class: "btn btn--sm btn--bad",
+                    form: { data: { turbo_confirm: t("settings.places.delete_confirm") } } %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

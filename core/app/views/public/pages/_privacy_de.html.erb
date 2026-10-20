@@ -1,0 +1,17 @@
+<h1>Datenschutzerklärung</h1>
+<p><strong>Verantwortlich:</strong> <%= tenant.legal_name.presence || tenant.name %><%= ", #{tenant.email}" if tenant.email.present? %><%= ", #{PhoneNumber.display(tenant.public_phone)}" if tenant.public_phone.present? %></p>
+
+<h2>Welche Daten wir bearbeiten</h2>
+<p>Für Ihre Fahrt bearbeiten wir Name, Telefonnummer, optional E-Mail, Abhol- und Zielort, Zeitpunkt, Personenzahl, Flugnummer und Ihre Bemerkungen. Rufen Sie uns an, bearbeiten wir Ihre Rufnummer und – wenn unser digitaler Telefonassistent den Anruf entgegennimmt – den Gesprächsinhalt als Text, um Ihre Buchung aufzunehmen.</p>
+
+<h2>Zweck</h2>
+<p>Ausschliesslich zur Durchführung und Abrechnung Ihrer Fahrt, zur Bestätigung per SMS (und per E-Mail, wenn Sie uns Ihre Adresse angeben) und – einmalig nach der Fahrt – für eine Bitte um Bewertung. Keine Weitergabe zu Werbezwecken.</p>
+
+<h2>Dienstleister</h2>
+<p>Wir setzen technische Dienstleister ein: Hosting der Buchungsplattform, Twilio (Telefonie und SMS), ein E-Mail-Versanddienst, Anthropic (Sprachverständnis des Telefonassistenten) sowie einen Kartendienst zur Adressbestimmung und Preisberechnung. Diese bearbeiten Daten nur in unserem Auftrag. Dabei können Daten in Länder ausserhalb des EWR bzw. der Schweiz übermittelt werden; dies erfolgt auf Grundlage geeigneter Garantien (z.&nbsp;B. Standardvertragsklauseln).</p>
+
+<h2>Aufbewahrung</h2>
+<p>Personenbezogene Daten werden nach <%= tenant.data_retention_days %> Tagen ohne neue Buchung anonymisiert. Buchhalterisch relevante Angaben bewahren wir gemäss den gesetzlichen Fristen auf.</p>
+
+<h2>Ihre Rechte</h2>
+<p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung und Datenübertragbarkeit sowie auf Beschwerde bei der Datenschutzstelle Liechtenstein bzw. dem EDÖB in der Schweiz. Wenden Sie sich dafür an die oben genannte Adresse.</p>

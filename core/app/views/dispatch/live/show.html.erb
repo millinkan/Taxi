@@ -1,0 +1,25 @@
+<% content_for :title, t("dispatch.live.title") %>
+<% content_for :live_map, true %>
+
+<div class="page-head">
+  <h1><%= t("dispatch.live.title") %></h1>
+  <%= link_to t("dispatch.board.title"), dispatch_root_path, class: "btn" %>
+</div>
+
+<div class="card" data-controller="live-map"
+     data-live-map-channel-value="<%= { channel: "FleetChannel", tenant_id: current_tenant.id }.to_json %>"
+     data-live-map-cars-value="<%= @cars.to_json %>">
+  <div class="live-map live-map--large" data-live-map-target="map" role="img" aria-label="<%= t("dispatch.live.title") %>"></div>
+  <p class="field-hint"><%= t("dispatch.live.explain") %></p>
+</div>
+
+<h2 class="section-title"><%= t("dispatch.live.trips", count: @trips.size) %></h2>
+<div class="card card--flush">
+  <% if @trips.any? %>
+    <% @trips.each do |trip| %>
+      <%= render "dispatch/trip", trip: trip %>
+    <% end %>
+  <% else %>
+    <p class="empty"><%= t("dispatch.live.none") %></p>
+  <% end %>
+</div>

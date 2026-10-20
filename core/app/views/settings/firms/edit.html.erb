@@ -1,0 +1,131 @@
+<% content_for :title, t("settings.title") %>
+<h1><%= t("settings.title") %></h1>
+<%= render "settings/nav" %>
+
+<% urls = TenantUrls.new(@tenant) %>
+<div class="card" style="margin-bottom: 16px;">
+  <strong><%= t("settings.firm.booking_page") %></strong>
+  <p style="margin: 4px 0 0;"><%= link_to urls.booking_page, urls.booking_page, target: "_blank", rel: "noopener" %></p>
+  <p class="field-hint"><%= t("settings.firm.booking_page_hint") %></p>
+</div>
+
+<%= form_with model: @tenant, url: settings_firm_path, method: :patch do |f| %>
+  <%= form_errors(@tenant.errors) %>
+
+  <div class="masonry">
+    <div class="card">
+      <h2><%= t("settings.firm.sections.profile") %></h2>
+      <div class="field"><%= f.label :name, t("settings.firm.name") %><%= f.text_field :name, required: true %></div>
+      <div class="field"><%= f.label :legal_name, t("settings.firm.legal_name") %><%= f.text_field :legal_name %></div>
+      <div class="field"><%= f.label :licence_number, t("settings.firm.licence_number") %><%= f.text_field :licence_number %></div>
+      <div class="fields-2">
+        <div class="field"><%= f.label :brand_color, t("settings.firm.brand_color") %><%= f.color_field :brand_color, style: "height: 44px; width: 100%;" %></div>
+        <div class="field"><%= f.label :default_locale, t("settings.firm.default_locale") %><%= f.select :default_locale, Tenant::LOCALES.map { |l| [ l.upcase, l ] } %></div>
+      </div>
+      <div class="field"><%= f.label :logo_url, t("settings.firm.logo_url") %><%= f.url_field :logo_url %></div>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.contact") %></h2>
+      <div class="field"><%= f.label :public_phone, t("settings.firm.public_phone") %><%= f.telephone_field :public_phone %></div>
+      <div class="field"><%= f.label :email, t("settings.firm.email") %><%= f.email_field :email %></div>
+      <div class="field"><%= f.label :website_url, t("settings.firm.website_url") %><%= f.url_field :website_url %></div>
+      <div class="field">
+        <%= f.label :google_review_url, t("settings.firm.google_review_url") %><%= f.url_field :google_review_url %>
+        <p class="field-hint"><%= t("settings.firm.google_review_hint") %></p>
+      </div>
+      <div class="field">
+        <%= f.label :google_business_url, t("settings.firm.google_business_url") %><%= f.url_field :google_business_url, placeholder: "https://maps.app.goo.gl/…" %>
+        <p class="field-hint"><%= t("settings.firm.google_business_hint") %></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.dispatch") %></h2>
+      <div class="field"><%= f.label :dispatcher_name, t("settings.firm.dispatcher_name") %><%= f.text_field :dispatcher_name %></div>
+      <div class="field">
+        <%= f.label :dispatcher_phone, t("settings.firm.dispatcher_phone") %><%= f.telephone_field :dispatcher_phone %>
+        <p class="field-hint"><%= t("settings.firm.dispatcher_phone_hint") %></p>
+      </div>
+      <div class="field">
+        <%= f.label :sms_sender_id, t("settings.firm.sms_sender_id") %><%= f.text_field :sms_sender_id, maxlength: 11 %>
+        <p class="field-hint"><%= t("settings.firm.sms_sender_hint") %></p>
+      </div>
+      <div class="fields-2">
+        <div class="field"><%= f.label :dispatch_escalation_minutes, t("settings.firm.escalation") %><%= f.number_field :dispatch_escalation_minutes, min: 1 %></div>
+        <div class="field"><%= f.label :free_cancellation_hours, t("settings.firm.free_cancellation") %><%= f.number_field :free_cancellation_hours, min: 0 %></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.voice") %></h2>
+      <label class="checkbox"><%= f.check_box :voice_agent_enabled %> <%= t("settings.firm.voice_agent_enabled") %></label>
+      <p class="field-hint"><%= t("settings.firm.voice_agent_hint") %></p>
+      <div class="field">
+        <%= f.label :voice_greeting, t("settings.firm.voice_greeting") %>
+        <%= f.text_area :voice_greeting, rows: 2, placeholder: t("settings.firm.voice_greeting_placeholder", firm: @tenant.name) %>
+      </div>
+      <label class="checkbox"><%= f.check_box :missed_call_textback_enabled %> <%= t("settings.firm.missed_call_textback") %></label>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.area") %></h2>
+      <div class="fields-2">
+        <div class="field"><%= f.label :service_center_lat, t("settings.firm.lat") %><%= f.number_field :service_center_lat, step: "0.000001" %></div>
+        <div class="field"><%= f.label :service_center_lng, t("settings.firm.lng") %><%= f.number_field :service_center_lng, step: "0.000001" %></div>
+      </div>
+      <div class="fields-2">
+        <div class="field"><%= f.label :service_radius_km, t("settings.firm.radius") %><%= f.number_field :service_radius_km, min: 1 %></div>
+        <div class="field"><%= f.label :home_area_label, t("settings.firm.home_area_label") %><%= f.text_field :home_area_label %></div>
+      </div>
+      <div class="field">
+        <%= f.label :opening_hours, t("settings.firm.opening_hours") %><%= f.text_field :opening_hours, required: true %>
+        <p class="field-hint"><%= t("settings.firm.opening_hours_hint") %></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.asap") %></h2>
+      <label class="checkbox"><%= f.check_box :asap_enabled %> <%= t("settings.firm.asap_enabled") %></label>
+      <div class="field" style="margin-top: 8px;">
+        <%= f.label :asap_response_minutes, t("settings.firm.asap_response_minutes") %>
+        <%= f.number_field :asap_response_minutes, min: 1, max: 30 %>
+        <p class="field-hint"><%= t("settings.firm.asap_hint") %></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.policy") %></h2>
+      <div class="fields-2">
+        <div class="field"><%= f.label :min_lead_minutes, t("settings.firm.min_lead") %><%= f.number_field :min_lead_minutes, min: 0 %></div>
+        <div class="field"><%= f.label :max_advance_days, t("settings.firm.max_advance") %><%= f.number_field :max_advance_days, min: 1 %></div>
+      </div>
+      <label class="checkbox"><%= f.check_box :auto_confirm %> <%= t("settings.firm.auto_confirm") %></label>
+      <div class="field" style="margin-top: 8px;">
+        <%= f.label :auto_confirm_min_lead_hours, t("settings.firm.auto_confirm_hours") %>
+        <%= f.number_field :auto_confirm_min_lead_hours, min: 0 %>
+        <p class="field-hint"><%= t("settings.firm.auto_confirm_hint") %></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.revenue") %></h2>
+      <label class="checkbox"><%= f.check_box :empty_legs_enabled %> <%= t("settings.firm.empty_legs") %></label>
+      <div class="fields-2" style="margin-top: 8px;">
+        <div class="field"><%= f.label :empty_leg_discount_percent, t("settings.firm.empty_leg_discount") %><%= f.number_field :empty_leg_discount_percent, min: 0, max: 90 %></div>
+        <div class="field"><%= f.label :empty_leg_min_distance_km, t("settings.firm.empty_leg_min_km") %><%= f.number_field :empty_leg_min_distance_km, min: 0 %></div>
+      </div>
+      <label class="checkbox"><%= f.check_box :review_requests_enabled %> <%= t("settings.firm.review_requests") %></label>
+    </div>
+
+    <div class="card">
+      <h2><%= t("settings.firm.sections.privacy") %></h2>
+      <div class="field">
+        <%= f.label :data_retention_days, t("settings.firm.retention") %><%= f.number_field :data_retention_days, min: 30 %>
+        <p class="field-hint"><%= t("settings.firm.retention_hint") %></p>
+      </div>
+    </div>
+  </div>
+
+  <p style="margin-top: 16px;"><%= f.submit t("settings.save"), class: "btn btn--primary btn--lg" %></p>
+<% end %>

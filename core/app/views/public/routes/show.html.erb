@@ -1,0 +1,44 @@
+<% origin = @route.origin_place %>
+<% destination = @route.destination_place %>
+<% cheapest = money(@variants.first&.price_cents || @route.price_cents) %>
+<% content_for :title, t("public.routes.title", from: origin.name, to: destination.name, price: cheapest, firm: current_tenant.name) %>
+<% content_for :description, t("public.routes.meta_description", from: origin.name, to: destination.name, price: cheapest, firm: current_tenant.name) %>
+<% content_for :canonical, TenantUrls.new(current_tenant).route_page(@route) %>
+
+<section class="hero">
+  <h1><%= t("public.routes.headline", from: origin.name, to: destination.name) %></h1>
+  <p><%= t("public.routes.intro", price: cheapest, firm: current_tenant.name) %></p>
+  <% if @route.bidirectional? %><p class="muted"><%= t("public.routes.both_directions") %></p><% end %>
+</section>
+
+<div class="card card--flush table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th><%= t("public.booking.vehicle") %></th>
+        <th class="num"><%= t("public.status.price") %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @variants.each do |variant| %>
+        <tr>
+          <td><%= t("vehicle_categories.#{variant.vehicle_category}") %></td>
+          <td class="num"><strong><%= money(variant.price_cents) %></strong></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<ul class="trust" style="margin-top: 16px;">
+  <li><%= t("public.routes.fixed_note") %></li>
+  <li><%= t("public.trust.sms_confirmation") %></li>
+  <li><%= t("public.booking.payment_note") %></li>
+</ul>
+
+<div class="actions" style="margin-top: 16px;">
+  <%= link_to t("public.routes.book"), site_path(:booking_page, from: origin.id, to: destination.id), class: "btn btn--primary btn--lg" %>
+  <% if current_tenant.asap_enabled? %>
+    <%= link_to t("public.routes.now"), site_path(:now, from: origin.id, to: destination.id), class: "btn btn--lg" %>
+  <% end %>
+</div>

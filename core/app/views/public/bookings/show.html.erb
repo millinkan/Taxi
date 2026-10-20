@@ -1,0 +1,88 @@
+<% content_for :title, t("public.status.title", ref: @booking.reference) %>
+<% content_for :noindex, true %>
+
+<div class="page-head">
+  <h1><%= t("public.status.heading", ref: @booking.reference) %></h1>
+  <%= status_badge(@booking) %>
+</div>
+
+<% asap_state = @booking.asap? && @booking.status.in?(%w[pending confirmed declined]) %>
+<%# A "taxi now" customer is watching this page for their ETA; keep it fresh. %>
+<% if @booking.asap? && @booking.pending? %><meta http-equiv="refresh" content="15"><% end %>
+
+<div class="card stack">
+  <p style="margin: 0; font-weight: 600;">
+    <%= t("public.status.explain.#{@booking.status}#{"_asap" if asap_state}",
+          minutes: current_tenant.asap_response_minutes, eta: @booking.eta_minutes,
+          time: l(@booking.local_pickup_at, format: :time)) %>
+  </p>
+
+  <dl class="kv">
+    <dt><%= t("public.status.when") %></dt>
+    <dd><%= pickup_time(@booking, format: :long_day) %></dd>
+    <dt><%= t("public.status.from") %></dt>
+    <dd><%= @booking.pickup_address %></dd>
+    <dt><%= t("public.status.to") %></dt>
+    <dd><%= @booking.dropoff_address %></dd>
+    <dt><%= t("public.status.passengers") %></dt>
+    <dd><%= @booking.passengers %> · <%= t("vehicle_categories.#{@booking.vehicle_category}") %></dd>
+    <% if @booking.flight_number.present? %>
+      <dt><%= t("public.status.flight") %></dt>
+      <dd><%= @booking.flight_number %></dd>
+    <% end %>
+    <dt><%= t("public.status.price") %></dt>
+    <dd><%= booking_price(@booking) %></dd>
+    <% if @booking.vehicle && @booking.committed? %>
+      <dt><%= t("public.status.vehicle") %></dt>
+      <dd><%= @booking.vehicle.label %></dd>
+    <% end %>
+  </dl>
+</div>
+
+<% if @booking.trackable? %>
+  <% content_for :live_map, true %>
+  <div class="card stack" style="margin-top: 16px;" data-controller="live-map"
+       data-live-map-channel-value="<%= { channel: "TripChannel", public_token: @booking.public_token }.to_json %>"
+       data-live-map-pickup-value="<%= (@booking.pickup_point.located? ? [ @booking.pickup_lat.to_f, @booking.pickup_lng.to_f ] : []).to_json %>"
+       data-live-map-cars-value="<%= [ Tracking.position(@booking) ].compact.to_json %>"
+       data-live-map-texts-value="<%= { eta: t("public.tracking.eta"), ended: t("public.tracking.ended") }.to_json %>">
+    <strong><%= t("public.tracking.title") %></strong>
+    <div class="live-map" data-live-map-target="map" role="img" aria-label="<%= t("public.tracking.map_label") %>"></div>
+    <p style="margin: 0;" data-live-map-target="info" aria-live="polite">
+      <% if (position = Tracking.position(@booking)) && position[:eta_min] %>
+        <%= t("public.tracking.eta", minutes: position[:eta_min], km: format("%.1f", position[:distance_m] / 1000.0)) %>
+      <% else %>
+        <%= t("public.tracking.waiting") %>
+      <% end %>
+    </p>
+  </div>
+<% end %>
+
+<div class="actions" style="margin-top: 16px;">
+  <% phone = current_tenant.public_phone.presence || current_tenant.dispatcher_phone %>
+  <% if phone.present? %>
+    <a class="btn" href="tel:<%= phone %>">📞 <%= t("public.status.call") %></a>
+  <% end %>
+
+  <% if @booking.to_airport? && @booking.return_booking.nil? && @booking.open? %>
+    <%= link_to t("public.status.book_return"), site_path(:booking_page, return_of: @booking.public_token), class: "btn btn--primary" %>
+  <% end %>
+
+  <% unless @booking.open? %>
+    <%= link_to t("public.status.book_again"), site_path(:booking_page), class: "btn btn--primary" %>
+  <% end %>
+
+  <% if @booking.asap? && @booking.declined? && current_tenant.asap_enabled? %>
+    <%= link_to t("public.now.try_again"), site_path(:now), class: "btn" %>
+  <% end %>
+
+  <% if @booking.customer_cancellable? %>
+    <%= button_to t("public.status.cancel"), site_path(:booking_cancel, token: @booking.public_token),
+          method: :post, class: "btn btn--bad btn--block",
+          form: { data: { turbo_confirm: t("public.status.cancel_confirm") } } %>
+  <% end %>
+</div>
+
+<% if @booking.open? && !@booking.customer_cancellable? %>
+  <p class="field-hint"><%= t("public.status.cancel_by_phone", hours: current_tenant.free_cancellation_hours) %></p>
+<% end %>

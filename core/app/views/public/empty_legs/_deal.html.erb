@@ -1,0 +1,12 @@
+<%= link_to site_path(:booking_page, deal: deal.id), class: "deal" do %>
+  <span><strong><%= deal.origin_label %> → <%= deal.destination_label %></strong></span>
+  <span class="muted">
+    <%= l(deal.available_from.in_time_zone(current_tenant.time_zone), format: :short_day) %>
+    – <%= l(deal.available_until.in_time_zone(current_tenant.time_zone), format: :time) %>
+    · <%= t("public.deals.seats", count: deal.seats) %>
+  </span>
+  <span>
+    <span class="deal__price"><%= money(deal.price_cents) %></span>
+    <% if deal.savings_cents %><span class="deal__was"><%= money(deal.regular_price_cents) %></span><% end %>
+  </span>
+<% end %>

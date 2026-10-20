@@ -1,0 +1,11 @@
+<% content_for :title, t("auth.forgot") %>
+<div class="card">
+  <h1><%= t("auth.forgot") %></h1>
+  <%= form_with url: passwords_path do |form| %>
+    <div class="field">
+      <%= form.label :email_address, t("auth.email") %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address] %>
+    </div>
+    <%= form.submit t("auth.send_reset"), class: "btn btn--primary btn--block" %>
+  <% end %>
+</div>

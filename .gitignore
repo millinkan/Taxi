@@ -1,0 +1,28 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+core/config/master.key
+core/config/credentials/*.key
+
+# Core (Rails)
+core/log/*
+!core/log/.keep
+core/tmp/*
+!core/tmp/.keep
+core/storage/*
+!core/storage/.keep
+core/public/assets
+core/.bundle
+core/vendor/bundle
+
+# Voice (Node)
+voice/node_modules
+voice/dist
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea

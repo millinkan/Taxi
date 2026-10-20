@@ -1,0 +1,114 @@
+<% content_for :title, t("dashboard.title") %>
+<% report = @report %>
+<% daily = report.daily %>
+<% max_count = [ daily.map { |_, count, _| count }.max.to_i, 1 ].max %>
+<% sources = report.by_source %>
+<% max_source = [ sources.map { |row| row[:revenue_cents] }.max.to_i, 1 ].max %>
+
+<div class="page-head">
+  <h1><%= t("dashboard.title") %></h1>
+  <nav class="subnav" style="margin: 0;" aria-label="<%= t("dashboard.period") %>">
+    <% PerformanceReport::PERIODS.each_key do |key| %>
+      <%= link_to t("dashboard.periods.#{key}"), dashboard_path(period: key), "aria-current": (report.period.key == key ? "page" : nil) %>
+    <% end %>
+  </nav>
+</div>
+
+<div class="card stack">
+  <div class="stat">
+    <span class="stat__label"><%= t("dashboard.platform_revenue") %></span>
+    <span class="hero-figure"><%= money(report.platform_revenue_cents) %></span>
+    <span class="stat__note"><%= t("dashboard.platform_revenue_note", total: money(report.revenue_cents)) %></span>
+  </div>
+</div>
+
+<div class="grid grid--kpi" style="margin-top: 12px;">
+  <% [
+       [ "bookings", report.total_bookings, t("dashboard.notes.bookings", completed: report.completed_count, lost: report.lost_count) ],
+       [ "average_value", money(report.average_value_cents), nil ],
+       [ "calls_ai", report.calls_answered_by_ai, t("dashboard.notes.calls", total: report.calls_total) ],
+       [ "call_conversion", percent(report.call_conversion_rate), t("dashboard.notes.call_conversion", booked: report.calls_booked) ],
+       [ "empty_legs", report.empty_legs_sold, t("dashboard.notes.empty_legs", published: report.empty_legs_published) ],
+       [ "return_trips", report.return_trips, nil ],
+       [ "repeat_share", percent(report.repeat_customer_share), nil ],
+       [ "confirm_minutes", report.median_confirmation_minutes ? "#{report.median_confirmation_minutes} min" : "—", t("dashboard.notes.confirm_minutes") ]
+     ].each do |key, value, note| %>
+    <div class="card stat">
+      <span class="stat__label"><%= t("dashboard.kpis.#{key}") %></span>
+      <span class="stat__value"><%= value %></span>
+      <% if note %><span class="stat__note"><%= note %></span><% end %>
+    </div>
+  <% end %>
+</div>
+
+<div class="grid grid--2" style="margin-top: 12px;">
+  <div class="card">
+    <div class="card__title">
+      <h2 style="margin: 0;"><%= t("dashboard.chart_title") %></h2>
+      <span class="muted"><%= t("dashboard.chart_subtitle") %></span>
+    </div>
+    <div class="colchart" role="img" aria-label="<%= t("dashboard.chart_aria", max: max_count) %>">
+      <div class="colchart__plot">
+        <span class="colchart__max"><%= max_count %></span>
+        <span class="colchart__gridline" style="top: 18px;" aria-hidden="true"></span>
+        <% daily.each do |day, count, revenue| %>
+          <span class="colchart__slot" tabindex="0">
+            <span class="colchart__bar <%= "colchart__bar--zero" if count.zero? %>"
+                  style="height: <%= count.zero? ? 0 : (count.to_f / max_count * 100).round(1) %>%;"></span>
+            <span class="colchart__tip"><%= l(day, format: :short) %> · <%= t("dashboard.tip", count: count, revenue: money(revenue)) %></span>
+          </span>
+        <% end %>
+      </div>
+      <div class="colchart__axis" aria-hidden="true">
+        <span><%= l(daily.first.first, format: :short) %></span>
+        <span><%= l(daily.last.first, format: :short) %></span>
+      </div>
+    </div>
+    <details style="margin-top: 12px;">
+      <summary class="muted"><%= t("dashboard.show_table") %></summary>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><%= t("dashboard.day") %></th><th class="num"><%= t("dashboard.kpis.bookings") %></th><th class="num"><%= t("dashboard.revenue") %></th></tr></thead>
+          <tbody>
+            <% daily.reverse_each do |day, count, revenue| %>
+              <tr><td><%= l(day, format: :short) %></td><td class="num"><%= count %></td><td class="num"><%= money(revenue) %></td></tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2><%= t("dashboard.by_source") %></h2>
+    <% if sources.any? %>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><%= t("dashboard.source") %></th><th class="num"><%= t("dashboard.kpis.bookings") %></th><th><%= t("dashboard.revenue") %></th></tr></thead>
+          <tbody>
+            <% sources.each do |row| %>
+              <tr>
+                <td><%= source_label(row[:source]) %><% if Booking::PLATFORM_SOURCES.include?(row[:source]) %> <span class="tag"><%= t("dashboard.platform_tag") %></span><% end %></td>
+                <td class="num"><%= row[:count] %></td>
+                <td>
+                  <div class="hbar">
+                    <div class="hbar__track"><div class="hbar__fill" style="width: <%= (row[:revenue_cents].to_f / max_source * 100).round(1) %>%;"></div></div>
+                    <span class="nowrap"><%= money(row[:revenue_cents]) %></span>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="empty"><%= t("dashboard.no_data") %></p>
+    <% end %>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 12px;">
+  <h2><%= t("dashboard.google_ads_title") %></h2>
+  <p class="muted"><%= t("dashboard.google_ads_explain") %></p>
+  <%= link_to t("dashboard.google_ads_download"), google_ads_export_path(format: :csv), class: "btn" %>
+</div>

@@ -1,0 +1,79 @@
+<% tenant = current_tenant %>
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>">
+  <head>
+    <title><%= content_for(:title) || t("public.title", firm: tenant.name) %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="<%= content_for(:description) || t("public.meta_description", firm: tenant.name, area: tenant.home_area_label) %>">
+    <% if content_for?(:canonical) %>
+      <%# One URL per language: the firm's default language plain, the other with ?lang=. %>
+      <% canonical = content_for(:canonical) %>
+      <% localized = ->(code) { code == tenant.default_locale ? canonical : "#{canonical}#{canonical.include?("?") ? "&" : "?"}lang=#{code}" } %>
+      <link rel="canonical" href="<%= localized.(I18n.locale.to_s) %>">
+      <% Tenant::LOCALES.each do |code| %>
+        <link rel="alternate" hreflang="<%= code %>" href="<%= localized.(code) %>">
+      <% end %>
+      <link rel="alternate" hreflang="x-default" href="<%= canonical %>">
+    <% end %>
+    <% unless content_for?(:noindex) || !respond_to?(:site_path) %>
+      <link rel="alternate" type="application/json" title="Discovery feed" href="<%= site_path(:discovery_feed) %>">
+      <%= discovery_json_ld(tenant) %>
+    <% end %>
+    <meta name="theme-color" content="<%= tenant.brand_color %>">
+    <%# Token-bearing URLs (status pages, dispatcher links) must not leak via Referer. %>
+    <meta name="referrer" content="no-referrer">
+    <% if content_for?(:noindex) %><meta name="robots" content="noindex, nofollow"><% end %>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= render "shared/live_map_assets" if content_for?(:live_map) %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body style="--brand: <%= tenant.brand_color %>; --brand-ink: <%= ink_on(tenant.brand_color) %>;">
+    <header class="site-header">
+      <div class="container">
+        <%= link_to (respond_to?(:site_path) ? site_path(:booking_page) : "#"), class: "brand" do %>
+          <% if tenant.logo_url.present? %><%= image_tag tenant.logo_url, alt: "" %><% end %>
+          <span><%= tenant.name %></span>
+        <% end %>
+        <div class="row">
+          <% phone = tenant.public_phone.presence || tenant.dispatcher_phone %>
+          <% if phone.present? %>
+            <a class="header-call" href="tel:<%= phone %>">📞 <span><%= PhoneNumber.display(phone) %></span></a>
+          <% end %>
+          <% if respond_to?(:site_path) %>
+            <nav class="lang-switch" aria-label="<%= t("public.language") %>">
+              <% Tenant::LOCALES.each do |code| %>
+                <%= link_to code.upcase, url_for(lang: code), "aria-current": (I18n.locale.to_s == code ? "true" : nil), hreflang: code %>
+              <% end %>
+            </nav>
+          <% end %>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container container--narrow">
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container container--narrow stack">
+        <div>
+          <strong><%= tenant.legal_name.presence || tenant.name %></strong>
+          <% if tenant.licence_number.present? %> · <%= t("public.licence", number: tenant.licence_number) %><% end %>
+        </div>
+        <% if respond_to?(:site_path) %>
+          <div class="row">
+            <%= link_to t("public.privacy_link"), site_path(:privacy) %>
+            <% if tenant.empty_legs_enabled? %><%= link_to t("public.deals_link"), site_path(:deals) %><% end %>
+          </div>
+        <% end %>
+      </div>
+    </footer>
+  </body>
+</html>

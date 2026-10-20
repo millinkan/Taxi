@@ -1,0 +1,88 @@
+# Kamal deployment for the core (Rails). See docs/OPERATIONS.md.
+#
+# Fill in the three REPLACE values, put secrets in .kamal/secrets (from your
+# password manager, never committed), then:  bin/kamal setup   (first time)
+#                                             bin/kamal deploy  (every release)
+service: ridedesk-core
+image: REPLACE-registry-user/ridedesk-core
+
+servers:
+  web:
+    - REPLACE.SERVER.IP          # Hetzner Cloud server from deploy/hetzner/provision.sh (docs/HOSTING_HETZNER.md)
+
+proxy:
+  ssl: true                      # Let's Encrypt certificates, auto-renewed
+  hosts:
+    - app.REPLACE-DOMAIN.li      # platform host
+    # - buchen.taxi-firm.li      # each firm's custom domain (CNAME to the platform host)
+  app_port: 80
+  healthcheck:
+    path: /up
+
+registry:
+  server: ghcr.io
+  username: REPLACE-registry-user
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+env:
+  secret:
+    - RAILS_MASTER_KEY
+    - INTERNAL_API_TOKEN
+    - TWILIO_ACCOUNT_SID
+    - TWILIO_AUTH_TOKEN
+    - GOOGLE_MAPS_API_KEY
+    - SMTP_USERNAME
+    - SMTP_PASSWORD
+  clear:
+    APP_HOST: app.REPLACE-DOMAIN.li
+    PLATFORM_NAME: RideDesk
+    SOLID_QUEUE_IN_PUMA: true    # jobs run inside the web process: one container to run
+    SMS_PROVIDER: twilio
+    TWILIO_SMS_FROM: RideDesk    # default alphanumeric sender; firms can set their own
+    GEOCODER_CONTACT_EMAIL: ops@REPLACE-DOMAIN.li
+    TWILIO_WEBHOOK_BASE_URL: https://app.REPLACE-DOMAIN.li
+    # Booking emails: uncomment once the mail provider has verified the domain.
+    # Hetzner blocks outgoing ports 25 and 465 on new accounts: use port 587.
+    # SMTP_ADDRESS: smtp.REPLACE-PROVIDER.com
+    # SMTP_PORT: 587
+    # MAIL_FROM: bookings@REPLACE-DOMAIN.li
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  shell: app exec --interactive --reuse "bash"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
+
+# SQLite databases live on this volume (the server's local NVMe disk).
+# Litestream (below) streams every change to Object Storage.
+volumes:
+  - "ridedesk_storage:/rails/storage"
+
+accessories:
+  # Continuous SQLite backup to Hetzner Object Storage (config/litestream.yml).
+  # Start once with:  bin/kamal accessory boot litestream
+  litestream:
+    image: litestream/litestream:0.3.13
+    host: REPLACE.SERVER.IP
+    cmd: replicate
+    files:
+      - config/litestream.yml:/etc/litestream.yml
+    volumes:
+      - "ridedesk_storage:/rails/storage"
+    env:
+      clear:
+        LITESTREAM_BUCKET: REPLACE-bucket-name
+        LITESTREAM_REGION: nbg1
+        LITESTREAM_ENDPOINT: https://nbg1.your-objectstorage.com
+      secret:
+        - LITESTREAM_ACCESS_KEY_ID
+        - LITESTREAM_SECRET_ACCESS_KEY
+
+asset_path: /rails/public/assets
+
+builder:
+  arch: amd64
+  # The repository root is the parent folder (core/ + voice/), so build from
+  # this directory explicitly. Deploy from a clean, committed checkout.
+  context: .

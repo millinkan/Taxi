@@ -1,0 +1,56 @@
+#cloud-config
+# First-boot setup for the RideDesk server on Hetzner Cloud (Ubuntu 24.04).
+# Passed by provision.sh as user data. Kamal installs Docker on `kamal setup`;
+# this file only hardens the host and prepares what Docker should find.
+#
+# The network firewall is Hetzner's Cloud Firewall (provision.sh), not ufw:
+# Docker publishes ports past ufw's rules, so a host firewall would look
+# closed while ports 80/443 stay open anyway.
+
+package_update: true
+package_upgrade: true
+packages:
+  - unattended-upgrades
+  - fail2ban
+  - sqlite3          # for manual inspection and restore drills on the host
+
+# Small swap as a safety margin for asset builds and memory spikes.
+swap:
+  filename: /swapfile
+  size: 2G
+
+write_files:
+  # Keys only: no passwords, root only with a key (Kamal deploys as root).
+  - path: /etc/ssh/sshd_config.d/10-ridedesk.conf
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin prohibit-password
+      MaxAuthTries 3
+
+  # Security updates install themselves; reboots stay manual (planned).
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+  # Docker's default log driver never rotates; cap container logs so they
+  # cannot fill the disk. Docker reads this file when Kamal installs it.
+  - path: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "20m", "max-file": "5" }
+      }
+
+  - path: /etc/fail2ban/jail.d/sshd.local
+    content: |
+      [sshd]
+      enabled = true
+      maxretry = 5
+      bantime = 1h
+
+runcmd:
+  - systemctl restart ssh
+  - systemctl enable --now fail2ban
+  - timedatectl set-timezone UTC   # the app stores UTC; each firm's zone is applied in the app

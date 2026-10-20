@@ -1,0 +1,18 @@
+<%= form_with model: [ :settings, vehicle ] do |f| %>
+  <%= form_errors(vehicle.errors) %>
+  <div class="fields-2">
+    <div class="field"><%= f.label :name, t("settings.vehicles.name") %><%= f.text_field :name, required: true, placeholder: "Mercedes E-Klasse" %></div>
+    <div class="field"><%= f.label :plate, t("settings.vehicles.plate") %><%= f.text_field :plate, placeholder: "FL 12345" %></div>
+  </div>
+  <div class="fields-2">
+    <div class="field">
+      <%= f.label :category, t("settings.vehicles.category") %>
+      <%= f.select :category, VehicleCategory::ALL.map { |c| [ t("vehicle_categories.#{c}"), c ] } %>
+    </div>
+    <div class="field"><%= f.label :seats, t("settings.vehicles.seats") %><%= f.number_field :seats, min: 1, max: 16 %></div>
+  </div>
+  <label class="checkbox"><%= f.check_box :active %> <%= t("settings.vehicles.active") %></label>
+  <p></p>
+  <%= f.submit t("settings.save"), class: "btn btn--primary" %>
+  <%= link_to t("settings.back"), settings_vehicles_path, class: "btn" %>
+<% end %>

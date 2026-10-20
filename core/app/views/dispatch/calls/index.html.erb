@@ -1,0 +1,34 @@
+<% content_for :title, t("dispatch.calls.title") %>
+
+<div class="page-head">
+  <h1><%= t("dispatch.calls.title") %></h1>
+</div>
+
+<div class="card card--flush table-wrap">
+  <% if @calls.any? %>
+    <table>
+      <thead>
+        <tr>
+          <th><%= t("dispatch.calls.when") %></th>
+          <th><%= t("dispatch.calls.caller") %></th>
+          <th><%= t("dispatch.calls.handled_by") %></th>
+          <th><%= t("dispatch.calls.outcome") %></th>
+          <th><%= t("dispatch.calls.booking") %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @calls.each do |call| %>
+          <tr>
+            <td class="nowrap"><%= link_to l(call.created_at, format: :short_day), dispatch_call_path(call) %></td>
+            <td><%= call.customer&.display_name || PhoneNumber.display(call.from_number) %></td>
+            <td><%= t("call_handlers.#{call.handled_by}") %></td>
+            <td><%= t("call_outcomes.#{call.outcome}") %></td>
+            <td><%= call.booking ? link_to(call.booking.reference, dispatch_booking_path(call.booking)) : "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="empty"><%= t("dispatch.calls.none") %></p>
+  <% end %>
+</div>

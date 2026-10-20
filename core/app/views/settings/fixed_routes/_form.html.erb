@@ -1,0 +1,31 @@
+<%= form_with model: route, scope: :fixed_route,
+      url: (route.persisted? ? settings_fixed_route_path(route) : settings_fixed_routes_path),
+      method: (route.persisted? ? :patch : :post) do |f| %>
+  <%= form_errors(route.errors) %>
+  <div class="fields-2">
+    <div class="field">
+      <%= f.label :origin_place_id, t("settings.routes.from") %>
+      <%= f.collection_select :origin_place_id, @places, :id, :name, { include_blank: "—" }, required: true %>
+    </div>
+    <div class="field">
+      <%= f.label :destination_place_id, t("settings.routes.to") %>
+      <%= f.collection_select :destination_place_id, @places, :id, :name, { include_blank: "—" }, required: true %>
+    </div>
+  </div>
+  <div class="fields-2">
+    <div class="field">
+      <%= f.label :vehicle_category, t("settings.routes.vehicle") %>
+      <%= f.select :vehicle_category, VehicleCategory::ALL.map { |c| [ t("vehicle_categories.#{c}"), c ] } %>
+    </div>
+    <div class="field">
+      <%= f.label :price, t("settings.routes.price_with_currency", currency: current_tenant.currency) %>
+      <%= f.number_field :price, step: "0.05", min: 0, required: true,
+            value: route.price_cents && format("%.2f", route.price_cents / 100.0) %>
+    </div>
+  </div>
+  <label class="checkbox"><%= f.check_box :bidirectional %> <%= t("settings.routes.bidirectional") %></label>
+  <label class="checkbox"><%= f.check_box :active %> <%= t("settings.routes.active") %></label>
+  <p></p>
+  <%= f.submit t("settings.save"), class: "btn btn--primary" %>
+  <%= link_to t("settings.back"), settings_fixed_routes_path, class: "btn" %>
+<% end %>

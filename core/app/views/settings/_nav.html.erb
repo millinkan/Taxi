@@ -1,0 +1,7 @@
+<nav class="subnav" aria-label="<%= t("settings.title") %>">
+  <%= nav_link t("settings.nav.firm"), edit_settings_firm_path %>
+  <%= nav_link t("settings.nav.pricing"), edit_settings_pricing_path %>
+  <%= nav_link t("settings.nav.routes"), settings_fixed_routes_path, active: controller_name == "fixed_routes" %>
+  <%= nav_link t("settings.nav.places"), settings_places_path, active: controller_name == "places" %>
+  <%= nav_link t("settings.nav.vehicles"), settings_vehicles_path, active: controller_name == "vehicles" %>
+</nav>

@@ -1,0 +1,70 @@
+<% content_for :title, "#{@booking.reference} · #{t("statuses.#{@booking.status}")}" %>
+<% content_for :noindex, true %>
+<% customer = @booking.customer %>
+
+<div class="page-head">
+  <h1 class="trip__time" style="font-size: 1.5rem;">
+    <% if @booking.asap? && @booking.pending? %>🚕 <%= t("dispatch.asap.label") %><% else %><%= pickup_time(@booking, format: :short_day) %><% end %>
+  </h1>
+  <%= status_badge(@booking) %>
+</div>
+<% if @booking.asap? && @booking.pending? %>
+  <p class="flash flash--alert"><%= t("dispatch.asap.waiting", minutes: @booking.tenant.asap_response_minutes, ago: time_ago_in_words(@booking.created_at)) %></p>
+<% end %>
+
+<div class="card stack">
+  <dl class="kv">
+    <dt><%= t("dispatch.fields.from") %></dt>
+    <dd><%= link_to @booking.pickup_address, @booking.navigation_url(@booking.pickup_point), rel: "noreferrer", target: "_blank" %></dd>
+    <dt><%= t("dispatch.fields.to") %></dt>
+    <dd><%= link_to @booking.dropoff_address, @booking.navigation_url(@booking.dropoff_point), rel: "noreferrer", target: "_blank" %></dd>
+    <dt><%= t("dispatch.fields.customer") %></dt>
+    <dd><%= customer.display_name %> · <%= phone_link(customer.phone) %><% if customer.repeat? %> <span class="tag"><%= t("dispatch.repeat_customer", count: customer.bookings_count) %></span><% end %></dd>
+    <dt><%= t("dispatch.fields.party") %></dt>
+    <dd><%= t("dispatch.party", pax: @booking.passengers, bags: @booking.luggage) %> · <%= t("vehicle_categories.#{@booking.vehicle_category}") %></dd>
+    <% if @booking.flight_number.present? %>
+      <dt><%= t("dispatch.fields.flight") %></dt>
+      <dd><%= @booking.flight_number %></dd>
+    <% end %>
+    <dt><%= t("dispatch.fields.price") %></dt>
+    <dd><strong><%= booking_price(@booking) %></strong> <span class="muted">(<%= t("price_sources.#{@booking.price_source || "on_request"}") %>)</span></dd>
+    <% if @booking.notes.present? %>
+      <dt><%= t("dispatch.fields.notes") %></dt>
+      <dd><%= @booking.notes %></dd>
+    <% end %>
+    <dt><%= t("dispatch.fields.source") %></dt>
+    <dd><%= source_label(@booking.source) %></dd>
+  </dl>
+</div>
+
+<div class="stack" style="margin-top: 16px;">
+  <% if @booking.pending? && @booking.asap? %>
+    <%= render "dispatch/eta_buttons", url: dispatch_link_confirm_path(token: @booking.dispatch_token) %>
+    <%= button_to t("dispatch.asap.no_car"), dispatch_link_decline_path(token: @booking.dispatch_token),
+          class: "btn btn--bad btn--block", params: { reason: "no_capacity" } %>
+  <% elsif @booking.pending? %>
+    <%= button_to t("dispatch.actions.confirm"), dispatch_link_confirm_path(token: @booking.dispatch_token),
+          class: "btn btn--good btn--block btn--lg" %>
+    <%= button_to t("dispatch.actions.decline"), dispatch_link_decline_path(token: @booking.dispatch_token),
+          class: "btn btn--bad btn--block", params: { reason: "no_capacity" },
+          form: { data: { turbo_confirm: t("dispatch.actions.decline_confirm") } } %>
+  <% elsif @booking.confirmed? %>
+    <%= button_to t("dispatch.actions.start"), dispatch_link_start_path(token: @booking.dispatch_token),
+          class: "btn btn--primary btn--block btn--lg" %>
+  <% end %>
+
+  <% if @booking.confirmed? || @booking.on_the_way? %>
+    <%= form_with url: dispatch_link_complete_path(token: @booking.dispatch_token), method: :post, class: "card" do |f| %>
+      <%= f.label :final_price, t("dispatch.final_price_label", currency: @booking.tenant.currency) %>
+      <div class="row">
+        <%= f.number_field :final_price, step: "0.05", min: 0, inputmode: "decimal",
+              placeholder: @booking.quoted_price_cents && format("%.2f", @booking.quoted_price_cents / 100.0), style: "flex: 1;" %>
+        <%= f.submit t("dispatch.actions.complete"), class: "btn btn--good" %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%= render "dispatch/tracking", booking: @booking %>
+
+  <a class="btn btn--block" href="tel:<%= customer.phone %>">📞 <%= t("dispatch.actions.call_customer") %></a>
+</div>

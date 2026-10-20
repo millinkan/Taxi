@@ -1,0 +1,16 @@
+<% content_for :title, t("auth.sign_in") %>
+<div class="card">
+  <h1><%= t("auth.sign_in") %></h1>
+  <%= form_with url: session_path do |form| %>
+    <div class="field">
+      <%= form.label :email_address, t("auth.email") %>
+      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address] %>
+    </div>
+    <div class="field">
+      <%= form.label :password, t("auth.password") %>
+      <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72 %>
+    </div>
+    <%= form.submit t("auth.sign_in"), class: "btn btn--primary btn--block" %>
+  <% end %>
+  <p style="margin-top: 16px;"><%= link_to t("auth.forgot"), new_password_path %></p>
+</div>

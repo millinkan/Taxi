@@ -1,0 +1,11 @@
+<% content_for :title, @tenant.name %>
+<h1><%= @tenant.name %></h1>
+
+<div class="card" style="max-width: 820px;">
+  <%= form_with model: @tenant, url: admin_tenant_path(@tenant), method: :patch do |f| %>
+    <%= form_errors(@tenant.errors) %>
+    <%= render "tenant_fields", f: f %>
+    <%= f.submit t("settings.save"), class: "btn btn--primary" %>
+    <%= link_to t("settings.back"), admin_tenant_path(@tenant), class: "btn" %>
+  <% end %>
+</div>
